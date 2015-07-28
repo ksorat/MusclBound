@@ -43,7 +43,7 @@ end
 %Calculate values at internal ghost zones (level set method) using physical
 %image points
 
-if (Model.lvlset,present)
+if (Model.lvlset.present)
     Gas = LvlGhost(Model,Grid,Gas);
 end
 

@@ -166,7 +166,7 @@ end
 if isfield(Model.Init,'lvlDef')
     Model.lvlset.present = true;
 else
-    Model.lvlset.present = true;
+    Model.lvlset.present = false;
 end
 
 
