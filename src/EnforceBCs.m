@@ -40,6 +40,13 @@ for n=1:Nd
        
 end
 
+%Calculate values at internal ghost zones (level set method) using physical
+%image points
+
+if (Model.lvlset,present)
+    Gas = LvlGhost(Model,Grid,Gas);
+end
+
 function Gas = InJetBC(Model,Grid,Gas,dir)
 
 %Note, we assume dir = ibx

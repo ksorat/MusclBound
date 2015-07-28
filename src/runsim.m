@@ -19,9 +19,14 @@ Grid = BuildGrid(Model);
 %Initialize grid variables
 Gas = InitGas(Model,Grid);
 
-%Initialize solid (ib nodes)
+%Initialize solid (legoland method)
 if (Model.solid.present)
     Grid = InitSolid(Model,Grid);
+end
+
+%Initialize solid (level set method)
+if (Model.lvlset.present)
+    Grid = InitLvl(Model,Grid);
 end
 
 %Enforce BC's on initial setup
@@ -156,6 +161,12 @@ if isfield(Model.Init,'obsDef')
     Model.solid.present = true;    
 else
     Model.solid.present = false;
+end
+
+if isfield(Model.Init,'lvlDef')
+    Model.lvlset.present = true;
+else
+    Model.lvlset.present = true;
 end
 
 

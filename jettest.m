@@ -17,11 +17,11 @@ Init.Min = 10; %Inward mach number of jet
 
 Init.cent = 0.0;
 Init.rad = 0.3;
-Init.disc = 'true'; %Discrete or smooth jet?
+Init.disc = true; %Discrete or smooth jet?
 %Graphical data
 Pic.view = true; %Print pic
 Pic.val = 'P'; %Which quantity to print
-Pic.pg = 'true'; %Print ghosts
+Pic.pg = true; %Print ghosts
 
 sim = 'flow';
 Pic.val = 'd';
