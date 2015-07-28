@@ -27,15 +27,14 @@ halfdt = Grid.dt/2;
 %Also note, calculating Fx/Fy are independent and a good source of
 %parallelism
 
-Fx = RiemannFlux(Wxl,Wxr,Model,Model.solver,Grid);
-Fxy = RiemannFlux(Wyl,Wyr,Model,Model.solver,Grid); %Needs to be untwisted, 2<->3
-
+[Fx Fxl] = RiemannFlux(Wxl,Wxr,Model,Model.solver,Grid);
+[Fxy Fxyl] = RiemannFlux(Wyl,Wyr,Model,Model.solver,Grid); %Needs to be untwisted, 2<->3
 
 Fy = UntwistFlux(Fxy);
-
+Fyl = UntwistFlux(Fxyl);
 
 %Step 1c - Evolve to half-timestep states
-[D_hf Vx_hf Vy_hf P_hf] = FluxAdvance(Grid,0.5*Grid.dt,Gas.D,Gas.Vx,Gas.Vy,Gas.P,Fx,Fy,Model);
+[D_hf Vx_hf Vy_hf P_hf] = FluxAdvance(Grid,0.5*Grid.dt,Gas.D,Gas.Vx,Gas.Vy,Gas.P,Fx,Fy,Fxl,Fyl,Model);
 
 %Step 2 - Calculate dircted states using PLM w/ half-timestep states
 %Step 2a - Package half-timestep states into Gas_hf
@@ -49,24 +48,33 @@ Gas_hf.P = P_hf;
 [Wxl Wxr Wyl Wyr] = DirstateToIntLR(Grid,Gas,nW,eW,sW,wW);
 
 %Step 3 - Calculate fluxes
-Fx = RiemannFlux(Wxl,Wxr,Model,Model.solver,Grid);
-Fxy = RiemannFlux(Wyl,Wyr,Model,Model.solver,Grid); %Needs to be untwisted, 2<->3
+[Fx Fxl] = RiemannFlux(Wxl,Wxr,Model,Model.solver,Grid);
+[Fxy Fxyl] = RiemannFlux(Wyl,Wyr,Model,Model.solver,Grid); %Needs to be untwisted, 2<->3
 
 Fy = UntwistFlux(Fxy);
-
+Fyl = UntwistFlux(Fxyl);
 
 %Step 4 - Evolve from initial state (in Gas) -> final state over full
 %timestep
 %Add D_hf for time-centered density included in external forces
 
-[D Vx Vy P] = FluxAdvance(Grid,Grid.dt,Gas.D,Gas.Vx,Gas.Vy,Gas.P,Fx,Fy,Model,D_hf);
+[D Vx Vy P] = FluxAdvance(Grid,Grid.dt,Gas.D,Gas.Vx,Gas.Vy,Gas.P,Fx,Fy,Fxl,Fyl,Model,D_hf);
 Gas.D = D;
 Gas.Vx = Vx; Gas.Vy = Vy;
 Gas.P = P;
 
 
 %Uses flux to advance W_i -> W_o over a time dt
-function [Do Vxo Vyo Po] = FluxAdvance(Grid,dt,Di,Vxi,Vyi,Pi,Fx,Fy,Model,varargin)
+function [Do Vxo Vyo Po] = FluxAdvance(Grid,dt,Di,Vxi,Vyi,Pi,Fx,Fy,Fxl,Fyl,Model,varargin)
+
+global SMALL_NUM;
+fac = 1.2; %This is fairly ad hoc
+
+if ( length(Fxyl) > 0 )
+    FluxCorrect = true;
+else
+    FluxCorrect = false;
+end
 
 [Nx,Ny] = size(Di);
 %Note, |Fx| = [Nv,Nx+1,Ny]
@@ -89,6 +97,10 @@ if (Model.solid.present)
     sol = Grid.solid;
     Fx(:,sol.Fx_sol) = 0.0;
     Fy(:,sol.Fy_sol) = 0.0;
+    if (FluxCorrect) %Do this for secondary fluxes as well
+        Fxl(:,sol.Fx_sol) = 0.0;
+        Fyl(:,sol.Fy_sol) = 0.0;
+    end
 end
 %Advance in time, U_i -> U_o
 dtox = dt/Grid.dx;
@@ -106,6 +118,33 @@ Myo = Myi(:,:) + squeeze(dtox*( Fx(3,1:Nx,:) - Fx(3,2:Nx+1,:) ) + ...
 Eo = Ei(:,:) + squeeze(dtox*( Fx(4,1:Nx,:) - Fx(4,2:Nx+1,:) ) + ...
     + dtoy*( Fy(4,:,1:Ny) - Fy(4,:,2:Ny+1) ));
 
+if ( FluxCorrect )
+    %We've calculated high and low order fluxes, so correct if necessary
+    %Need pressure
+    [Do Vxo Vyo Po] = Con2Prim(Do,Mxo,Myo,Eo,Model);
+    Ind = (Do < 1.2*SMALL_NUM) | (Po < 1.2*SMALL_NUM);
+    Indn = find(Ind); NumC = sum(Ind(:));
+    
+    if (NumC > 0)
+        fprintf('\tHLLC->HLLE @ %d cell(s).\n', NumC);
+        [jj ii] = meshgrid(1:Ny,1:Nx);
+        for nc=length(Indn)
+            n = Indn(nc);
+            i = ii(n); j = jj(n);
+            %Redo update with HLLE fluxes
+            
+            Do(i,j) = Di(i,j) + dtox*( Fxl(1,i,j) - Fxl(1,i+1,j) ) + ...
+                + dtoy*( Fyl(1,i,j) - Fyl(1,i,j+1) );
+            Mxo(i,j) = Mxi(i,j) + dtox*( Fxl(2,i,j) - Fxl(2,i+1,j) ) + ...
+                + dtoy*( Fyl(2,i,j) - Fyl(2,i,j+1) );
+            Myo(i,j) = Myi(i,j) + dtox*( Fxl(3,i,j) - Fxl(3,i+1,j) ) + ...
+                + dtoy*( Fyl(3,i,j) - Fyl(3,i,j+1) );
+            Po(i,j) = Pi(i,j) + dtox*( Fxl(4,i,j) - Fxl(4,i+1,j) ) + ...
+                + dtoy*( Fyl(4,i,j) - Fyl(4,i,j+1) );            
+        end
+    end
+    
+end
 %Add forces if necessary
 if isfield(Model,'force')
     %There is a force, incorporate it
@@ -278,6 +317,10 @@ end
     
 function Fy = UntwistFlux(Fxy)
 
-Fy = Fxy;
-Fy(2,:,:) = Fxy(3,:,:);
-Fy(3,:,:) = Fxy(2,:,:);
+if ( length(Fxy) > 0 )
+    Fy = Fxy;
+    Fy(2,:,:) = Fxy(3,:,:);
+    Fy(3,:,:) = Fxy(2,:,:);
+else
+    Fy = Fxy;
+end

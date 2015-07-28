@@ -2,7 +2,7 @@
 
 clear; close all;
 Model.recon = 'ppm';
-Model.solver = 'hllc';
+Model.solver = 'hll';
 
 config = 'flow';
 
@@ -11,9 +11,9 @@ config = 'flow';
 
 Init.rho0 = 1.0;
 Init.P0 = 1;
-Init.DelP = 0.0; %Pressure ratio for in versus out
+Init.DelP = 100.0; %Pressure ratio for in versus out
 
-Init.Min = 100; %Inward mach number of jet
+Init.Min = 10; %Inward mach number of jet
 
 Init.cent = 0.0;
 Init.rad = 0.3;
@@ -29,7 +29,7 @@ Pic.cax = [0.5 10];
 Model.Tfin = 50.0;
 Model.Bds = [-5 5 -5 5];
 
-Model.Nvec = [1024 1024]/4;
+Model.Nvec = [1024 1024]/8;
 obsDef.numObs = 1;
 obsDef.obsType = {'circle'};
 obsDef.View = true;
