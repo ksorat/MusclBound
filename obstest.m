@@ -20,7 +20,7 @@ Init.DelP = 1000.0; %Pressure ratio for in versus out
 %Graphical data
 Pic.view = true; %Print pic
 Pic.val = 'P'; %Which quantity to print
-Pic.pg = 'false'; %Print ghosts
+Pic.pg = false; %Print ghosts
 %Pic.cax = [0.05 3];
 switch lower(config)
     case{'pflowcyl'}

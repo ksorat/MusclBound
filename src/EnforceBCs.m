@@ -61,10 +61,17 @@ switch (lower(dir.str))
         Disc = Model.Init.disc;
         Shape = approxId(Grid.yc,pulseC,pulseRad,Disc);
         
+        d0 = Model.Init.rho0;
+        P0 = Model.Init.P0;
+        DelP = Model.Init.DelP;
+        vin = Model.Init.vin;
+        %Rescale shape function for pressure to vary between P0 and P0*DelP
+        Pshp = Shape*( P0*DelP - P0 ) + P0;
+        
         for n=1:ng
-            Gas.D(isd+n-1,:) = Model.Init.rho0;
-            Gas.P(isd+n-1,:) = Model.Init.P0*(1 + Model.Init.DelP*Shape);
-            Gas.Vx(isd+n-1,:) = Model.Init.vin*Shape;
+            Gas.D(isd+n-1,:) = d0;
+            Gas.P(isd+n-1,:) = Pshp;
+            Gas.Vx(isd+n-1,:) = vin*Shape;
             Gas.Vy(isd+n-1,:) = 0.0;
         end
     otherwise

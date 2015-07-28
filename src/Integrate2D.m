@@ -70,7 +70,7 @@ function [Do Vxo Vyo Po] = FluxAdvance(Grid,dt,Di,Vxi,Vyi,Pi,Fx,Fy,Fxl,Fyl,Model
 global SMALL_NUM;
 fac = 1.2; %This is fairly ad hoc
 
-if ( length(Fxyl) > 0 )
+if ( length(Fxl) > 0 )
     FluxCorrect = true;
 else
     FluxCorrect = false;
