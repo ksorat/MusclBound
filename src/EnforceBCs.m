@@ -2,7 +2,7 @@
 %Enforces boundary conditions on hydrodynamic variables
 %For now only does doubly-periodic
 
-function Gas = EnforceBCs(Model,Grid,Gas)
+function [Gas Grid] = EnforceBCs(Model,Grid,Gas)
 
 Dirs = {'ibx','obx','iby','oby'};
 Nd = length(Dirs);
@@ -42,8 +42,19 @@ end
 
 %Calculate values at internal ghost zones (level set method) using physical
 %image points
-
 if (Model.lvlset.present)
+    if (Model.lvlset.mobile)
+        %Recenter cylinder
+        x0 = Model.Init.lvlDef.x0;
+        y0 = Model.Init.lvlDef.y0;
+        ds = Model.Init.lvlDef.ds;
+        tau = Model.Init.lvlDef.tau;
+        x = x0 + ds(1)*sin(2*pi*Grid.t/tau);
+        y = y0 + ds(2)*sin(2*pi*Grid.t/tau);
+        Model.Init.lvlDef.obsParam(1:2) = [x y];
+        %Redo interior ghost calculation
+        Grid = InitLvl(Model,Grid);       
+    end
     Gas = LvlGhost(Model,Grid,Gas);
 end
 

@@ -102,6 +102,10 @@ lvlSet.sd = sd;
 lvlSet.fluid = fluid; lvlSet.obj = obj; lvlSet.ghost = ghost;
 lvlSet.ghost1d = ghost1d; lvlSet.gi = gi; lvlSet.gj = gj;
 lvlSet.ng = ng; lvlSet.ghost_sd = ghost_sd;
+lvlSet.ds = ds;
+lvlSet.dip = 1.75*ds; %1.75 as in the paper, avoids recursive interpolation
+lvlSet.nx = nx; lvlSet.ny = ny;
+
 
 %look upon my creation
 %plot(xc(gi),yc(gj),'ro'); hold on; quiver(xc(gi),yc(gj),nx,ny); hold off;

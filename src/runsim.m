@@ -30,7 +30,7 @@ if (Model.lvlset.present)
 end
 
 %Enforce BC's on initial setup
-Gas = EnforceBCs(Model,Grid,Gas);
+[Gas Grid] = EnforceBCs(Model,Grid,Gas);
 
 %Calculate initial timestep
 Grid.dt = CalcDT(Model,Grid,Gas);
@@ -57,7 +57,7 @@ while (Grid.t<Tfin)
     Grid.Ts = Grid.Ts+1;
     
     %Enforce BCs
-    Gas = EnforceBCs(Model,Grid,Gas);
+    [Gas Grid] = EnforceBCs(Model,Grid,Gas);
     
     %Calc new timestep
     Grid.dt = CalcDT(Model,Grid,Gas);
@@ -165,7 +165,17 @@ end
 
 if isfield(Model.Init,'lvlDef')
     Model.lvlset.present = true;
+    if ~isfield(Model.Init.lvlDef,'mobile')
+        Model.lvlset.mobile = false;
+    else
+        Model.lvlset.mobile = Model.Init.lvlDef.mobile;
+    end
+    if (Model.lvlset.mobile) %Initial center
+        Model.Init.lvlDef.x0 = Model.Init.lvlDef.obsParam(1);
+        Model.Init.lvlDef.y0 = Model.Init.lvlDef.obsParam(2);
+    end
 else
+    Model.lvlset.mobile = false;
     Model.lvlset.present = false;
 end
 
