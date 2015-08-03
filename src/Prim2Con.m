@@ -3,8 +3,9 @@ Gam = Model.Init.Gam;
 
 global SMALL_NUM;
 
-D = max(D,SMALL_NUM);
-P = max(P,SMALL_NUM);
+%K: Removed check here
+%D = max(D,SMALL_NUM);
+%P = max(P,SMALL_NUM);
 
 Mx = D.*Vx;
 My = D.*Vy;

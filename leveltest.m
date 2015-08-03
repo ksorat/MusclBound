@@ -17,7 +17,7 @@ Init.rho0 = 1.0;
 Init.P0 = 1;
 Model.Tfin = 50.0;
 Model.Bds = [-5 5 -2.5 2.5];
-Model.Nvec = round([1024 512]/6);
+Model.Nvec = round([1024 512]/8);
 
 switch lower(config)
     case{'leveljet'}
@@ -42,7 +42,10 @@ switch lower(config)
     case{'levelmjet'}
                
         Init.DelP = 1; %Pressure ratio
-        Init.Min = 10; %Inward Mach #
+        Init.Min = 50; %Inward Mach #
+        
+        Pic.val = 'd';
+        Pic.cax = [0.0 2];
         
         %Jet structure
         Init.cent = 0.0;
@@ -58,7 +61,7 @@ switch lower(config)
         lvlDef.numObs = 1; lvlDef.obsType{1} = 'circle';
         lvlDef.obsParam = [0 0 0.25 -1];
         lvlDef.ds = [0.0 0.5];
-        lvlDef.tau = 1;
+        lvlDef.tau = 0.5;
         lvlDef.mobile = true;        
     case{'levelcyl'}
         Init.problem = 'flow';

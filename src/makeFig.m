@@ -19,13 +19,17 @@ end
 x = Grid.xc(is:ie);
 y = Grid.yc(js:je);
 
+Pos = false; %Is this a positive definite quantity?
+
 switch lower(Model.Pic.val)
     case{'d'}
         Z = Gas.D;
         varS = 'Density';
+        Pos = true;
     case{'p'}
         Z = Gas.P;
         varS = 'Pressure';
+        Pos = true;
     case{'vx'}
         Z = Gas.Vx;
         varS = 'X-Velocity';
@@ -35,14 +39,17 @@ switch lower(Model.Pic.val)
     case{'spd'}
         Z = sqrt( Gas.Vx.^2 + Gas.Vy.^2);
         varS = 'Speed';
+        Pos = true;
     case{'k'}
         Z = 0.5*Gas.D.*( Gas.Vx.^2 + Gas.Vy.^2);
         varS = 'Kinetic Energy';
+        Pos = true;
     case{'ma','mach'}
         Spd = sqrt( Gas.Vx.^2 + Gas.Vy.^2);
         Cs = Prim2Cs(Gas.D,Gas.Vx,Gas.Vy,Gas.P,Model);
         Z = Spd./Cs;
         varS = 'Mach Number';
+        Pos = true;
     otherwise
         disp('Unknown diagnostic');
         pause;
@@ -69,6 +76,9 @@ else
     zM = mean(Zp(:));
     zStd = std(Zp(:));
     cAx = [ (zM-nStd*zStd) (zM+nStd*zStd) ];
+end
+if (Pos)
+    cAx(1) = 0.0;
 end
 
 if (Model.lvlset.present)
