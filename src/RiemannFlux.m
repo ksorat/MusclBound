@@ -17,15 +17,81 @@ switch lower(solver)
         Flux = RiemannFlux_HLLC(Wl,Wr,Model);
         Fluxl = [];
     case{'hll'}
-        %For now, calculate both HLLE/HLLC fluxes
-        %Later, write a routine that returns both (no redundant
-        %calculation)
-        Fluxl = RiemannFlux_HLLE(Wl,Wr,Model);
-        Flux = RiemannFlux_HLLC(Wl,Wr,Model);
+        %Calculate both HLLE/HLLC fluxes
+        [Fluxl Flux] = RiemannFlux_HLL(Wl,Wr,Model);
+        
     otherwise
         disp('Unknown Riemann solver type');
         pause
 end
+
+%Calculates both HLL(E+C) fluxes at once to avoid redundant calculation
+function [Fle Flc] = RiemannFlux_HLL(Wl,Wr,Model)
+Fle = zeros(size(Wl));
+Flc = Fle;
+
+%Calculate Roe averages
+[droe vxroe vyroe hroe] = RoeAverages(Wl,Wr,Model);
+
+evals = RoeEigenvals(droe,vxroe,vyroe,hroe,Model);
+
+%Calculate min/max wavespeeds of L/R states
+cfl = P2Cs(Wl,Model);
+cfr = P2Cs(Wr,Model);
+
+%Take min/max of Roe's eigenvalues and L/R states
+ar = max( evals(4,:,:) , Wr(2,:,:) + cfr );
+al = min( evals(1,:,:) , Wl(2,:,:) - cfl );
+
+bp = max(ar,0.0);
+bm = min(al,0.0);
+
+%Calculate L/R fluxes
+%Note, fluxes apply to *CONSERVED* not primitive vars
+[Fl Fr] = CalcLR_Fluxes(Wl,Wr,bm,bp,Model);
+
+%Compute the HLLE flux at each interface
+scl = 0.5*(bp + bm)./(bp - bm);
+
+for n=1:4
+    Fle(n,:,:) = 0.5*( Fl(n,:,:) + Fr(n,:,:) ) + ( Fl(n,:,:) - Fr(n,:,:) ).*scl;
+end
+
+%Now switch gears and do HLLC calculation
+%Calculate speed of contact wave and pressure
+tl = Wl(4,:,:) + Wl(1,:,:).*Wl(2,:,:).* ( Wl(2,:,:) - al );
+tr = Wr(4,:,:) + Wr(1,:,:).*Wr(2,:,:).* ( Wr(2,:,:) - ar );
+
+dl = Wl(1,:,:).*Wl(2,:,:) - Wl(1,:,:).*al;
+dr = -1*(Wr(1,:,:).*Wr(2,:,:) - Wr(1,:,:).*ar);
+
+am = (tl - tr) ./ (dl + dr); %Contact wave speed
+cp = (dl.*tr + dr.*tl) ./ (dl + dr); %Contact pressure at moving surface
+cp = max(cp,0.0); %Enforce positivity on pressure
+
+%Calculate scaling terms for L/R fluxes
+%Distinguish right-moving contact wave from left
+Ind = (am >= 0.0);
+SclR = zeros(size(am)); SclL = SclR; SclM = SclR;
+
+%Right-moving contact wave
+SclL(Ind) = am(Ind)./(am(Ind)-bm(Ind));
+SclR(Ind) = 0.0;
+SclM(Ind) = -bm(Ind)./(am(Ind)-bm(Ind));
+
+%Left-moving contact wave
+SclL(~Ind) = 0.0;
+SclR(~Ind) = -am(~Ind)./(bp(~Ind)-am(~Ind));
+SclM(~Ind) = bp(~Ind)./(bp(~Ind)-am(~Ind));
+
+%Compute HLLC flux
+for n=1:4
+    Flc(n,:,:) = SclL.* Fl(n,:,:) + SclR.*Fr(n,:,:);
+end
+%Add correction for contact
+Flc(2,:,:) = Flc(2,:,:) + SclM.*cp; %Correct Mx w/ contact pressure
+Flc(4,:,:) = Flc(4,:,:) + SclM.*cp.*am; %Correct energy
+
 
 function Flux = RiemannFlux_HLLE(Wl,Wr,Model)
 
