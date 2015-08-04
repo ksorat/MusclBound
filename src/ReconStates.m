@@ -44,6 +44,72 @@ wW = Checkstate(wW);
 %----------
 %Calculates minus/plus states (in dirvec direction) for all variables using
 %the PPM method
+function [mW pW] = DirstatePPMvec(Grid,Gas,dir)
+
+%Setup bounds
+[Nx,Ny] = size(Gas.D);
+allgas = zeros(Gas.Nv,Nx,Ny);
+allgas(1,:,:) = Gas.D;
+allgas(2,:,:) = Gas.Vx;
+allgas(3,:,:) = Gas.Vy;
+allgas(4,:,:) = Gas.P;
+mW = allgas; pW = allgas;
+
+IntX = 2:Nx-1;
+IntY = 2:Ny-1;
+switch lower(dir)
+    case{'x'}
+        Xp = 3:Nx;
+        Yp = IntY;
+        Xm = 1:Nx-2;
+        Ym = IntY;
+    case{'y'}
+        Xp = IntX;
+        Yp = 3:Ny;
+        Xm = IntX;
+        Ym = 1:Ny-2;
+end
+
+[DelWl DelWr DelWc] = GetDels(allgas,IntX,IntY,Xm,Xp,Ym,Yp);
+DelWmon = Monotonize(DelWl,DelWr,DelWc);
+
+mW(:,IntX,IntY) = 0.5*( allgas(:,IntX,IntY) + allgas(:,Xm,Ym) ) - (1/6)* ( DelWmon(:,IntX,IntY) + DelWmon(:,Xm,Ym) );
+pW(:,IntX,IntY) = 0.5*( allgas(:,Xp,Yp) + allgas(:,IntX,IntY) ) - (1/6)* ( DelWmon(:,Xp,Yp) + DelWmon(:,IntX,IntY) );
+
+
+%Apply further monotonicity constraints
+Ind = ( (pW(:,:,:) - allgas(:,:,:)).*(mW(:,:,:) - allgas(:,:,:)) <= 0);
+mW(Ind) = allgas(Ind);
+pW(Ind) = allgas(Ind);
+
+Lam = 6*( pW(:,:,:) - mW(:,:,:) ) .* ( allgas(:,:,:) - 0.5*(pW(:,:,:)+mW(:,:,:)));
+Beta = (pW(:,:,:) - mW(:,:,:)).^2;
+   
+Ind = (Lam > Beta);
+mW(Ind) = 3*allgas(Ind) - 2*pW(Ind);
+   
+Ind = (Lam < -1*Beta);
+pW(Ind) = 3*allgas(Ind) - 2*mW(Ind);
+
+
+%Monotonize the deltas
+function DelWmon = Monotonize(DelWl,DelWr,DelWc)
+
+tmpMin = min(2*abs(DelWl),2*abs(DelWr));
+fullMin = min(tmpMin,abs(DelWc));
+DelWmon = sign(DelWc).*fullMin;
+
+%Calculate L/R/C deltas
+function [DelWl DelWr DelWc] = GetDels(allgas,IntX,IntY,Xm,Xp,Ym,Yp)
+[Nv Nx Ny] = size(allgas);
+
+DelWl = zeros(Nv,Nx,Ny);
+DelWr = zeros(Nv,Nx,Ny);
+DelWc = zeros(Nv,Nx,Ny);
+
+DelWl(:,IntX,IntY) = allgas(:,IntX,IntY) - allgas(:,  Xm,  Ym);
+DelWr(:,IntX,IntY) = allgas(:,  Xp,  Yp) - allgas(:,IntX,IntY);
+DelWc(:,IntX,IntY) = 0.5*( allgas(:,Xp,Yp) - allgas(:,Xm,Ym) );
 
 function [mW pW] = DirstatePPM(Grid,Gas,dir)
 

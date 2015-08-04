@@ -7,8 +7,6 @@ function [Flux Fluxl] = RiemannFlux(Wl,Wr,Model,solver,Grid)
 %Note, we assume 2D and that we are solving along the x-direction
 %Y-direction is handled by interchanging x<->y
 
-
-
 switch lower(solver)
     case{'hlle'}
         Flux = RiemannFlux_HLLE(Wl,Wr,Model);

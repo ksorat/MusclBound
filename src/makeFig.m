@@ -1,5 +1,9 @@
 function makeFig(Model,Grid,Gas)
 
+global Nfig;
+
+
+
 Gam = Model.Init.Gam;
 %Set bounds
 if (Model.Pic.pg)
@@ -30,6 +34,9 @@ switch lower(Model.Pic.val)
         Z = Gas.P;
         varS = 'Pressure';
         Pos = true;
+    case{'logp'}
+        Z = log10(Gas.P);
+        varS = 'Log Pressure';
     case{'vx'}
         Z = Gas.Vx;
         varS = 'X-Velocity';
@@ -101,7 +108,7 @@ end
 
 caxis(cAx);
 xlabel('X'); ylabel('Y');
-titS = sprintf('%s @ t=%3.2f', varS, Grid.t);
+titS = sprintf('%s @ t=%3.3f', varS, Grid.t);
 title(titS);
 
 % 
@@ -116,4 +123,8 @@ title(titS);
 % end
 
 drawnow;
-
+if (Model.Pic.dovid)
+    Figfile = sprintf('%s/Vid.%04d.png', Model.Pic.vid_dir,Nfig);
+    export_fig(Figfile);
+end
+Nfig = Nfig+1;

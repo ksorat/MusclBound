@@ -121,8 +121,9 @@ Eo = Ei(:,:) + squeeze(dtox*( Fx(4,1:Nx,:) - Fx(4,2:Nx+1,:) ) + ...
 if ( FluxCorrect )
     %We've calculated high and low order fluxes, so correct if necessary
     %Need pressure
-    [Do Vxo Vyo Po] = Con2Prim(Do,Mxo,Myo,Eo,Model);
-    Ind = (Do < 1.2*SMALL_NUM) | (Po < 1.2*SMALL_NUM);
+    %[Do Vxo Vyo Po] = Con2Prim(Do,Mxo,Myo,Eo,Model);
+    [~, ~, ~, Po] = Con2Prim(Do,Mxo,Myo,Eo,Model);
+    Ind = (Do < fac*SMALL_NUM) | (Po < fac*SMALL_NUM);
     Indn = find(Ind); NumC = sum(Ind(:));
     
     if (NumC > 0)

@@ -11,13 +11,16 @@ config = 'levelmjet';
 Pic.view = true;
 Pic.val = 'd';
 Pic.pg = false;
+Pic.dovid = false;
+
 
 %Generic initialization values
 Init.rho0 = 1.0;
+
 Init.P0 = 1;
-Model.Tfin = 50.0;
+Model.Tfin = 20;
 Model.Bds = [-5 5 -2.5 2.5];
-Model.Nvec = round([1024 512]/8);
+Model.Nvec = round([1024 512]/1);
 
 switch lower(config)
     case{'leveljet'}
@@ -42,10 +45,10 @@ switch lower(config)
     case{'levelmjet'}
                
         Init.DelP = 1; %Pressure ratio
-        Init.Min = 50; %Inward Mach #
+        Init.Min = 10; %Inward Mach #
         
         Pic.val = 'd';
-        Pic.cax = [0.0 2];
+        Pic.cax = [0 3];
         
         %Jet structure
         Init.cent = 0.0;
@@ -60,8 +63,8 @@ switch lower(config)
         
         lvlDef.numObs = 1; lvlDef.obsType{1} = 'circle';
         lvlDef.obsParam = [0 0 0.25 -1];
-        lvlDef.ds = [0.0 0.5];
-        lvlDef.tau = 0.5;
+        lvlDef.ds = [0.0 1];
+        lvlDef.tau = 2;
         lvlDef.mobile = true;        
     case{'levelcyl'}
         Init.problem = 'flow';
@@ -88,6 +91,15 @@ switch lower(config)
         lvlDef.ds = [0.0 1.5];
         lvlDef.tau = 5;
         lvlDef.mobile = true;
+    case{'cylblast'}
+        Init.problem = 'blast';
+        Init.cent = [-2 1]; Init.rad = 0.5;
+        Init.rho0 = 1.0; Init.P0 = 1;
+        Init.DelP = 1000;
+        
+        lvlDef.numObs = 1; lvlDef.obsType{1} = 'circle';
+        lvlDef.obsParam = [0 0 0.5 -1];        
+        
     otherwise
         disp('Unknown problem');
 end

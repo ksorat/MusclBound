@@ -155,6 +155,16 @@ end
 
 if ~isfield(Model,'Pic')
     Model.Pic.view = false;
+    Model.Pic.dovid = false;
+else
+    if ~isfield(Model.Pic,'dovid')
+        Model.Pic.dovid = false;
+    end
+end
+
+%Handle video directory default
+if (Model.Pic.dovid) & ~isfield(Model.Pic,'vid_dir')
+        Model.Pic.vid_dir = 'Vids/scratch';
 end
 
 if isfield(Model.Init,'obsDef')
@@ -199,11 +209,13 @@ global SMALL_NUM;
 global DEBUG;
 global Pmin;
 global Dmin;
+global Nfig;
 
 SMALL_NUM = 1.0e-4;
 DEBUG = true;
 Pmin = 1.0e-4;
 Dmin = 1.0e-4;
+Nfig = 0;
 
 
 
