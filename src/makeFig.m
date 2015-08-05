@@ -88,7 +88,7 @@ if (Pos)
     cAx(1) = 0.0;
 end
 
-if (Model.lvlset.present)
+if (Model.lvlSet.present)
     sd = Grid.lvlSet.sd(is:ie,js:je);
     hold on;
     
@@ -97,10 +97,7 @@ if (Model.lvlset.present)
         contour(x,y,sd',[0 0],'w'); %Does outline
     else        
     %Fill region
-        C = contourc(x,y,sd',[0 0]);
-        xobs = C(1,2:end);
-        yobs = C(2,2:end);
-        fill(xobs,yobs,'w');
+        FillPolys(x,y,sd);
     end
     
     hold off;
@@ -111,20 +108,24 @@ xlabel('X'); ylabel('Y');
 titS = sprintf('%s @ t=%3.3f', varS, Grid.t);
 title(titS);
 
-% 
-% if (Model.ib.present)
-%     hold on;
-%     for n=1:Grid.ib.numObs
-%         obs = Grid.ib.obs{n};
-%         fill(obs.x,obs.y,'w');
-%         
-%     end
-%    hold off;
-% end
-
 drawnow;
 if (Model.Pic.dovid)
     Figfile = sprintf('%s/Vid.%04d.png', Model.Pic.vid_dir,Nfig);
     export_fig(Figfile);
 end
 Nfig = Nfig+1;
+
+function FillPolys(x,y,sd)
+
+C = contourc(x,y,sd',[0 0]);
+
+N = length(C);
+ic = 1;
+while (ic < N)
+    icp = ic+1;
+    num = C(2,ic); %How many elements are in this
+    xobs = C(1,icp:icp+num-1);
+    yobs = C(2,icp:icp+num-1);
+    ic = icp+num;
+    fill(xobs,yobs,'w');
+end

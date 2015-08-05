@@ -2,7 +2,7 @@
 
 function Gas = LvlGhost(Model,Grid,Gas)
 
-if (~Model.lvlset.present)
+if (~Model.lvlSet.present)
     %How did you even get here?
     disp('You shouldn''t be in LvlGhost');
 end
@@ -21,8 +21,8 @@ for n=1:lvlSet.ng
     
     %Signed distance/normals of this ghost zone from boundary
     sdn = lvlSet.ghost_sd(n);
-    nx = lvlSet.nx(n);
-    ny = lvlSet.ny(n);
+    nx = lvlSet.gNx(n);
+    ny = lvlSet.gNy(n);
     
     %Distance from ghost zone center to image point
     L = abs(sdn) + lvlSet.dip;
@@ -49,9 +49,8 @@ for n=1:lvlSet.ng
     
     scl = L/(L - abs(sdn) );
     
-    %Calculate velocity at this boundary point
-    %Vxbi = 0.0; Vybi = 0.0; %Velocity at boundary is zero, could be changed
-    [Vxbi Vybi] = calcVBi(Model,Grid);
+    Vxbi = lvlSet.gVx(n);
+    Vybi = lvlSet.gVy(n);
     
     Vxgc = Vxip - scl*( Vxip - Vxbi );
     Vygc = Vyip - scl*( Vyip - Vybi );

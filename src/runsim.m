@@ -25,7 +25,7 @@ if (Model.solid.present)
 end
 
 %Initialize solid (level set method)
-if (Model.lvlset.present)
+if (Model.lvlSet.present)
     Grid = InitLvl(Model,Grid);
 end
 
@@ -174,19 +174,25 @@ else
 end
 
 if isfield(Model.Init,'lvlDef')
-    Model.lvlset.present = true;
-    if ~isfield(Model.Init.lvlDef,'mobile')
-        Model.lvlset.mobile = false;
-    else
-        Model.lvlset.mobile = Model.Init.lvlDef.mobile;
+    Model.lvlSet.present = true;
+    lvlDef = Model.Init.lvlDef;
+    anymobile = false;
+    for n=1:lvlDef.numObs
+        obsDat = lvlDef.obsDat{n};
+        if ~isfield(obsDat,'mobile')
+            obsDat.mobile = false;
+        end
+        if (obsDat.mobile)
+            anymobile = true;
+        end
+        
+        lvlDef.obsDat{n} = obsDat;
     end
-    if (Model.lvlset.mobile) %Initial center
-        Model.Init.lvlDef.x0 = Model.Init.lvlDef.obsParam(1);
-        Model.Init.lvlDef.y0 = Model.Init.lvlDef.obsParam(2);
-    end
+    Model.lvlSet.anymobile = anymobile;
+    Model.Init.lvlDef = lvlDef;
 else
-    Model.lvlset.mobile = false;
-    Model.lvlset.present = false;
+    Model.lvlSet.anymobile = false;
+    Model.lvlSet.present = false;
 end
 
 

@@ -42,18 +42,11 @@ end
 
 %Calculate values at internal ghost zones (level set method) using physical
 %image points
-if (Model.lvlset.present)
-    if (Model.lvlset.mobile)
-        %Recenter cylinder
-        x0 = Model.Init.lvlDef.x0;
-        y0 = Model.Init.lvlDef.y0;
-        ds = Model.Init.lvlDef.ds;
-        tau = Model.Init.lvlDef.tau;
-        x = x0 + ds(1)*sin(2*pi*Grid.t/tau);
-        y = y0 + ds(2)*sin(2*pi*Grid.t/tau);
-        Model.Init.lvlDef.obsParam(1:2) = [x y];
-        %Redo interior ghost calculation
-        Grid = InitLvl(Model,Grid);       
+if (Model.lvlSet.present)
+    if (Model.lvlSet.anymobile)
+        %disp('Anymobile should be false for now');
+        Grid = InitLvl(Model,Grid);
+             
     end
     Gas = LvlGhost(Model,Grid,Gas);
 end

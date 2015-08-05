@@ -1,115 +1,193 @@
-
 function Grid = InitLvl(Model,Grid)
-
-%Take data from Model.Init.lvlDef to generate an obstruction via the level
+%Take data from Model.Init.lvlDef to generate obstructions via the level
 %set method
 
-%Note, for now this is implemented only for a single circle
+%This has been changed from the previous method.  Now is based on polygons
+
 %lvlDef contains
-%numObs = number of obstruction
-%lvlDef.obsType(1:numObs) = type of each obstruction
-%lvlDef.obsParam(1:numObs,1:4) = details for each, requires 4 numbers
-%block-type, the 4 numbers are [xmin xmax ymin ymax] 
-%wedge-type, the 4 numbers are [x0 y0 theta r] 
-%circle-type, the 4 numbers are [xc yc rad xx?] 
+%numObs = number of obstructions
+%obsDat{i} = data for each obstruction
+%obsDat{i}.type = circle/poly
+%circle type
+%       .radius
+%       .center = xc/yc
+%poly type
+%       .xv = x vertices
+%       .yv = y vertices
 
-%This method needs to return several things all located in Grid.lvlset
-%lvlset contains
+%For all types
+%obsDat{i}.mobile = true/false, is this object moving
+%obsDat{i}.veldat = data about velocity of this object
+
+%Data to be returned into Grid.lvlSet
 %sd = signed distance at each point
-%ghost = boolean, true at each point that is a level set ghost cell
-%obj = boolean, true at each point that is entirely contained in obs
-%fluid = boolean, true when neither of the previous 2 are (unnecessary)
-%Fx_sol/Fy_sol = 1 on "good" interfaces, 0 on "bad"
-%Bad interfaces = object<->object, object<->ghost
+%ghost = boolean, true at each point that is an interior ghost
+%obj = boolean, true at each point that is an interior solid
+%fluid = boolean, true at each point that is a fluid cell (unnecessary)
+%ghost1d = 1d indices of ghost cells
+%ghost_sd = 1d signed distances of ghost cells
+%gi/gj = 1d i/j coordinates of ghost cells
+%nx/ny = normal vector toward boundary for each interior ghost
+%vx/vy = velocity vector for each interior ghost
+%        THIS IS A LIE, we are assuming rigid motion for now
+%ds = grid spacing to use, max{dx,dy}
+%dip = probe length
 
+global SMALL_NUM;
+%Nwin = 4; %Smoothing window, number of cells
 lvlDef = Model.Init.lvlDef;
+Nx = Grid.Nx; Ny = Grid.Ny;
+numObs =lvlDef.numObs;
 
-%Trap things that aren't yet implemented
-
-if (lvlDef.numObs>1)
-    disp('Multiple objects in the level set method isn''t implemented');
-    pause;
-end
+lvlSet.ds = max(Grid.dx,Grid.dy);
+lvlSet.ds_min = min(Grid.dx,Grid.dy);
 
 
+sd = inf(Nx,Ny);
+Vx = zeros(Nx,Ny);
+Vy = zeros(Nx,Ny);
+Nvecx = zeros(Nx,Ny);
+Nvecy = zeros(Nx,Ny);
 
-lvlDef = Model.Init.lvlDef;
-numObs = lvlDef.numObs;
-obsType = lvlDef.obsType;
-obsParam = lvlDef.obsParam;
+%Create embiggen'ed arrays
+[yy xx] = meshgrid(Grid.yc,Grid.xc);
+[jj ii] = meshgrid(1:Ny,1:Nx);
 
-for i=1:numObs
-    switch lower(obsType{i})
+for n=1:numObs
+    obsDat = lvlDef.obsDat{n};
+    %In this loop update sd, nx/ny, and vx/vy
+    %Trap for mobility
+    if  (obsDat.mobile)
+        [delx dely vx vy] = moveObj(obsDat,Grid.t);
+        if (Grid.t < eps)
+            vx = 0; vy = 0;
+        end
+    else
+        delx = 0; dely = 0;
+        vx = 0; vy = 0;
+    end
+    
+    switch lower(obsDat.type)
         
         case{'circle'}
-            %Do circle type
-            parami = obsParam(i,:);
-            lvlSeti = lvlCircle(Grid,parami);
-        otherwise
-            disp('Non-circle objects not yet implemented in level set method');
+            %Convert circle to polygon
+            x0 = obsDat.center(1) + delx;
+            y0 = obsDat.center(2) + dely;
+            rad = obsDat.radius;
+            aLvl = lvlCircle(Grid,x0,y0,rad);            
+        case{'poly'}
+            disp('Polygons don''t work yet'); pause;
+            xv = obsDat.xv;
+            yv = obsDat.yv;
             
+        otherwise
+            disp('Unsupported object type');
     end
-    %Merge lvlseti into lvlset
-    %Don't bother for now, since numObs==1
-    lvlSet = lvlSeti;
+    
+    %aLvl has been created
+    Ind = (aLvl.sd < sd); %Where is the object the closest thing
+    sd(Ind) = aLvl.sd(Ind);
+    Nvecx(Ind) = aLvl.nx(Ind);
+    Nvecy(Ind) = aLvl.ny(Ind);
+    
+    Vx(Ind) = vx; Vy(Ind) = vy;
+
 end
 
-%Send it back
+%Calculate things derived from sd/V/N
+fluid = (sd > 0);
+obj = ( sd < -2*sqrt(2)*lvlSet.ds );
+ghost = (~fluid) & (~obj);
+
+%Create 1d arrays w/ extra info about the interior ghosts
+ghost1d = find(ghost); lvlSet.ghost1d = ghost1d;
+lvlSet.gi = ii(ghost1d);
+lvlSet.gj = jj(ghost1d);
+lvlSet.ng = length(ghost1d);
+lvlSet.ghost_sd = sd(ghost1d);
+lvlSet.gVx = Vx(ghost1d); lvlSet.gVy = Vy(ghost1d);
+lvlSet.gNx = Nvecx(ghost1d); lvlSet.gNy = Nvecy(ghost1d);
+
+lvlSet.dip = 1.75*lvlSet.ds;
+lvlSet.sd = sd;
 Grid.lvlSet = lvlSet;
 
-function lvlSet = lvlCircle(Grid,param)
+%Visualize if you wanna
+%kcolor(xx,yy,sd); hold on; quiver(xx(ghost1d),yy(ghost1d),lvlSet.gNx,lvlSet.gNy,'w'); hold off;
+%pause
+
+
+function aLvl = lvlCircle(Grid,x0,y0,rad)
 
 Nx = Grid.Nx; Ny = Grid.Ny;
 xc = Grid.xc; yc = Grid.yc;
 [yy xx] = meshgrid(yc, xc);
 [jj ii] = meshgrid(1:Ny,1:Nx);
 
-
-x0 = param(1);
-y0 = param(2);
-rad = param(3);
-
 rr = sqrt( (xx - x0).^2  + (yy - y0).^2 ) ;
 In =  rr <= rad;
 
-sd = zeros(Nx,Ny);
-sd = rr-rad;
+sd = (rr-rad);
+Px = (xx-x0); Py = (yy-y0);
+nvec = sqrt(Px.^2 + Py.^2);
 
-ds = max(Grid.dx,Grid.dy);
-fluid = (sd > 0);
-obj = (sd < -2*sqrt(2)*ds );
-ghost = (~fluid) & (~obj);
+aLvl.sd = sd;
+aLvl.nx = Px./nvec;
+aLvl.ny = Py./nvec;
 
-%Create 1d arrays w/ extra info about the ghost cells
-ghost1d = find(ghost);
-gi = ii(ghost1d);
-gj = jj(ghost1d);
-ng = length(ghost1d);
-ghost_sd = sd(ghost1d);
 
-%Create normal vector of ghost cells
-nx = zeros(1,ng); ny = nx;
-for n=1:ng
-    x = xc(gi(n));
-    y = yc(gj(n));
-    
-    vx = x-x0; vy = y-y0;
-    nvec = sqrt(vx^2 + vy^2);
-    nx(n) = vx/nvec; ny(n) = vy/nvec;
+%Calculates relevant values to move object
+%Displacement from center, velocity of boundary
+
+%if obsDat.mobile = true, then
+%obsDat.dx (1/2 elements)
+%obsDat.tau (1/2 elements)
+%obsDat.func (1/2 elements, 0 = sin, 1 = sin)
+
+%x = x0 + dx*func(2*pi*t/tau_x)
+%y = ...
+%delx = x-x0
+function [delx dely vx vy] = moveObj(obsDat,t)
+
+dx = obsDat.dx(1);
+if (length(obsDat.dx) > 1)
+    dy = obsDat.dx(2);
+else
+    dy = dx;
 end
 
-lvlSet.sd = sd;
-lvlSet.fluid = fluid; lvlSet.obj = obj; lvlSet.ghost = ghost;
-lvlSet.ghost1d = ghost1d; lvlSet.gi = gi; lvlSet.gj = gj;
-lvlSet.ng = ng; lvlSet.ghost_sd = ghost_sd;
-lvlSet.ds = ds;
-lvlSet.dip = 1.75*ds; %1.75 as in the paper, avoids recursive interpolation
-lvlSet.nx = nx; lvlSet.ny = ny;
+taux = obsDat.tau(1);
+if (length(obsDat.tau) > 1)
+    tauy = obsDat.tau(2);
+else
+    tauy = taux;
+end
+
+func = obsDat.func;
+fx = obsDat.func(1);
+if (length(func) > 1)
+    fy = func(2);
+else
+    fy = fx;
+end
+
+[delx vx] = moveDir(dx,taux,fx,t);
+[dely vy] = moveDir(dy,tauy,fy,t);
 
 
-%look upon my creation
-%plot(xc(gi),yc(gj),'ro'); hold on; quiver(xc(gi),yc(gj),nx,ny); hold off;
+function [del v] = moveDir(ds,taus,fs,t)
 
+if (fs == 0)
+    del = ds*sin(2*pi*t/taus);
+    v = (2*pi/taus)*ds*cos(2*pi*t/taus);
+elseif (fs == 1)
+    del = ds*cos(2*pi*t/taus);
+    v = -1*(2*pi/taus)*ds*sin(2*pi*t/taus);
+else
+    disp('Unknown functional form');
+    pause;
+end
+    
 
 
     
