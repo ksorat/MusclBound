@@ -180,6 +180,8 @@ if isfield(Model.Init,'lvlDef')
     Model.lvlSet.present = true;
     lvlDef = Model.Init.lvlDef;
     anymobile = false;
+    allpoly = true;
+    
     for n=1:lvlDef.numObs
         obsDat = lvlDef.obsDat{n};
         if ~isfield(obsDat,'mobile')
@@ -191,16 +193,19 @@ if isfield(Model.Init,'lvlDef')
         switch lower(obsDat.type)
             case{'circle'}
                 %Can add this later
+                allpoly = false;
             case{'poly'}
                 obsDat = fixPoly(obsDat);
         end
         lvlDef.obsDat{n} = obsDat;
     end
     Model.lvlSet.anymobile = anymobile;
+    Model.lvlSet.allpoly = allpoly;
     Model.Init.lvlDef = lvlDef;
 else
     Model.lvlSet.anymobile = false;
     Model.lvlSet.present = false;
+    Model.lvlSet.allpoly = false;
 end
 
 

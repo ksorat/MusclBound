@@ -113,7 +113,7 @@ lvlSet.dip = 1.75*lvlSet.ds;
 lvlSet.sd = sd;
 Grid.lvlSet = lvlSet;
 
-if (DEBUG & ( (Grid.t+Grid.dt) <eps) ) %Only do once
+if (DEBUG & ( (Grid.t+Grid.dt) <eps) & (numObs == 1) ) %Only do once
     plot(xv,yv,'r-o'); hold on;
     quiver(xx(ghost1d),yy(ghost1d),lvlSet.gNx,lvlSet.gNy,'k');
     plot(xx(ghost1d),yy(ghost1d),'bx');

@@ -18,11 +18,11 @@ Init.rho0 = 1.0;
 Init.P0 = 1;
 Init.DelP = 1;
 Model.Tfin = 10;
-Model.Bds = [-2 5 -2.5 2.5];
-Model.Nvec = round( [1024 512]/8 );
+Model.Bds = [-1 5 -2.5 2.5];
+Model.Nvec = round( [1024 512]/4 );
 Init.problem = 'flow';
 Nc = 11;
-InP.R = [1 1.5]; InP.Theta = [-30 30]; 
+InP.R = [0.5 1]; InP.Theta = [-30 30]; 
 [xv yv] = makeCrescent(InP,Nc);
 
 InP1 = InP; InP2 = InP;

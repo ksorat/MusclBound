@@ -97,7 +97,14 @@ if (Model.lvlSet.present)
         contour(x,y,sd',[0 0],'w'); %Does outline
     else        
     %Fill region
-        FillPolys(x,y,sd);
+        if (Model.lvlSet.allpoly)
+            for n=1:Model.Init.lvlDef.numObs
+                obsDat = Model.Init.lvlDef.obsDat{n};
+                fill(obsDat.xv,obsDat.yv,'w');
+            end
+        else
+            FillPolys(x,y,sd);
+        end
     end
     
     hold off;
