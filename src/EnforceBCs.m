@@ -2,7 +2,7 @@
 %Enforces boundary conditions on hydrodynamic variables
 %For now only does doubly-periodic
 
-function [Gas Grid] = EnforceBCs(Model,Grid,Gas)
+function [Gas Grid Model] = EnforceBCs(Model,Grid,Gas)
 
 Dirs = {'ibx','obx','iby','oby'};
 Nd = length(Dirs);
@@ -44,9 +44,10 @@ end
 %image points
 if (Model.lvlSet.present)
     if (Model.lvlSet.anymobile)
-        %disp('Anymobile should be false for now');
+        Model = moveObject(Model,Grid,Gas);
+        
+        %Recalculate geometry
         Grid = InitLvl(Model,Grid);
-             
     end
     Gas = LvlGhost(Model,Grid,Gas);
 end

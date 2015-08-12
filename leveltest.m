@@ -10,13 +10,13 @@ Pic.view = true;
 Pic.val = 'd';
 Pic.pg = false;
 Pic.dovid = false;
-Pic.cax = [0 3];
+Pic.cax = [0 4];
 
 %generic initialization
 Init.rho0 = 1.0;
 Init.P0 = 1;
 Init.DelP = 1;
-Model.Tfin = 20;
+Model.Tfin = 4;
 Model.Bds = [-5 5 -3 3];
 Model.Nvec = round( [1024 512]/8 );
 Init.problem = 'flow';

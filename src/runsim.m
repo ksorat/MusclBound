@@ -25,12 +25,13 @@ if (Model.solid.present)
 end
 
 %Initialize solid (level set method)
+
 if (Model.lvlSet.present)
     Grid = InitLvl(Model,Grid);
 end
 
 %Enforce BC's on initial setup
-[Gas Grid] = EnforceBCs(Model,Grid,Gas);
+[Gas Grid Model] = EnforceBCs(Model,Grid,Gas);
 
 %Calculate initial timestep
 Grid.dt = CalcDT(Model,Grid,Gas);
@@ -52,12 +53,13 @@ while (Grid.t<Tfin)
             
     end
     
+    %Enforce BCs
+    [Gas Grid Model] = EnforceBCs(Model,Grid,Gas);
+    
     %Update time
     Grid.t = Grid.t+Grid.dt;
     Grid.Ts = Grid.Ts+1;
     
-    %Enforce BCs
-    [Gas Grid] = EnforceBCs(Model,Grid,Gas);
     
     %Calc new timestep
     Grid.dt = CalcDT(Model,Grid,Gas);
@@ -104,9 +106,10 @@ Grid.Nx = length(Grid.xc);
 [Grid.yi Grid.yc Grid.js Grid.je Grid.jsd Grid.jed] = conDimNg(Grid.ys,Grid.ye,Grid.Nyp,Grid.ng);
 Grid.Ny = length(Grid.yc);
 
+Grid.dt = 0;
 Grid.t = 0;
 Grid.Ts = 0;
-Grid.C0 = 0.4;
+Grid.C0 = 0.45;
 
 Grid.tsDiag = 10;
 
@@ -185,7 +188,12 @@ if isfield(Model.Init,'lvlDef')
         if (obsDat.mobile)
             anymobile = true;
         end
-        
+        switch lower(obsDat.type)
+            case{'circle'}
+                %Can add this later
+            case{'poly'}
+                obsDat = fixPoly(obsDat);
+        end
         lvlDef.obsDat{n} = obsDat;
     end
     Model.lvlSet.anymobile = anymobile;
@@ -223,6 +231,26 @@ Pmin = 1.0e-4;
 Dmin = 1.0e-4;
 Nfig = 0;
 
+function obsDat = fixPoly(obsDat)
 
+%Close polygon if necessary
+if ((obsDat.xv(1) ~= obsDat.xv(end)) || (obsDat.yv(1) ~= obsDat.yv(end))) 
+    obsDat.xv = [obsDat.xv ; obsDat.xv(1)];
+    obsDat.yv = [obsDat.yv ; obsDat.yv(1)];
+end
+Nv = length(obsDat.xv);
+%Create/finalize velocity data if necessary
+if ( ~isfield(obsDat,'vx') | ~isfield(obsDat,'vy') )
+    obsDat.vx = zeros(1,Nv);
+    obsDat.vy = zeros(1,Nv);
+end
 
+if isfield(obsDat,'v0') %Initialize constant velocity
+    obsDat.vx(:) = obsDat.v0(1);
+    obsDat.vy(:) = obsDat.v0(2);
+end
+    
+%Zero out initial acceleration
+ax = zeros(1,Nv);
+obsDat.ax = ax; obsDat.ay = ax;
     
