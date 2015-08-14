@@ -40,13 +40,10 @@ for n=1:lvlSet.ng
     Dip = calcInterp(Img,Gas.D,Grid);
     Pip = calcInterp(Img,Gas.P,Grid);
     
-    Gas.D(ig,jg) = Dip;
-    Gas.P(ig,jg) = Pip;
     
     %Now calculate velocity to zero out slip at boundary
     Vxip = calcInterp(Img,Gas.Vx,Grid);
     Vyip = calcInterp(Img,Gas.Vy,Grid);
-    
     scl = L/(L - abs(sdn) );
     
     Vxbi = lvlSet.gVx(n);
@@ -54,13 +51,24 @@ for n=1:lvlSet.ng
     
     Vxgc = Vxip - scl*( Vxip - Vxbi );
     Vygc = Vyip - scl*( Vyip - Vybi );
+
+        
+    if (Img.g2g)
+        Dip = Gas.D(ig,jg);
+        Pip = Gas.P(ig,jg);
+        Vxgc = Gas.Vx(ig,jg);
+        Vygc = Gas.Vy(ig,jg);
+    end
+
+    Gas.D(ig,jg) = Dip;
+    Gas.P(ig,jg) = Pip;
     
     Gas.Vx(ig,jg) = Vxgc;
     Gas.Vy(ig,jg) = Vygc;
     
 end
 
-function [Vx Vy] = calcVBi(Model,Grid)
+function [Vx Vy] = calcVBi_trash(Model,Grid)
 
 if (Model.lvlset.mobile)
     %Assuming sinusoidal structure
@@ -135,3 +143,13 @@ Img.x = Grid.xc(Img.i);
 Img.y = Grid.yc(Img.j);
 
 Img.xip = xip; Img.yip = yip;
+
+%Check for ghost 2 ghost contact
+g2g = false;
+for n=1:4
+    if Grid.lvlSet.ghost(Img.i(n),Img.j(n))
+        g2g = true;
+    end
+end
+
+Img.g2g = g2g;

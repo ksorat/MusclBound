@@ -42,7 +42,7 @@ Tfin = Model.Tfin;
 while (Grid.t<Tfin)
     %Evolve from t->t+dt
 
-    Gas = Integrate2D(Model,Grid,Gas);
+    [Gas Model] = Integrate2D(Model,Grid,Gas);
     
     %Print diagnostics if necessary
     if (mod(Grid.Ts,Grid.tsDiag) == 0)    
@@ -248,14 +248,22 @@ Nv = length(obsDat.xv);
 if ( ~isfield(obsDat,'vx') | ~isfield(obsDat,'vy') )
     obsDat.vx = zeros(1,Nv);
     obsDat.vy = zeros(1,Nv);
+    obsDat.Vcm_x = 0;
+    obsDat.Vcm_y = 0;
 end
 
 if isfield(obsDat,'v0') %Initialize constant velocity
     obsDat.vx(:) = obsDat.v0(1);
     obsDat.vy(:) = obsDat.v0(2);
+    obsDat.Vcm_x = obsDat.v0(1);
+    obsDat.Vcm_y = obsDat.v0(2);
 end
     
 %Zero out initial acceleration
 ax = zeros(1,Nv);
 obsDat.ax = ax; obsDat.ay = ax;
-    
+
+%Create rigid body goodies
+obsDat.omega = 0;
+obsDat.Fx = zeros(1,Nv);
+obsDat.Fy = zeros(1,Nv);

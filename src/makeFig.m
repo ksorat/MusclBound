@@ -57,6 +57,12 @@ switch lower(Model.Pic.val)
         Z = Spd./Cs;
         varS = 'Mach Number';
         Pos = true;
+    case{'sd'}
+        Z = Grid.lvlSet.sd;
+        varS = 'Signed Distance';
+    case{'in','inside'}
+        Z = 1*( Grid.lvlSet.sd <= 0);
+        varS = 'Inside Object';
     otherwise
         disp('Unknown diagnostic');
         pause;
@@ -93,14 +99,33 @@ if (Model.lvlSet.present)
     hold on;
     
     if (Model.Pic.pg)
-        %Only do outline
-        contour(x,y,sd',[0 0],'w'); %Does outline
+        if (Model.lvlSet.allpoly)
+            for n=1:Model.Init.lvlDef.numObs
+                obsDat = Model.Init.lvlDef.obsDat{n};
+                
+                plot(obsDat.xv,obsDat.yv,'wo');
+            end
+        else
+            contour(x,y,sd',[0 0],'w'); %Does outline
+        end        
+              
     else        
     %Fill region
         if (Model.lvlSet.allpoly)
             for n=1:Model.Init.lvlDef.numObs
                 obsDat = Model.Init.lvlDef.obsDat{n};
                 fill(obsDat.xv,obsDat.yv,'w');
+                %plot(obsDat.xv,obsDat.yv,'wo');
+                Nv = length(obsDat.xv);
+                xvr = obsDat.xv(1:Nv-1); yvr = obsDat.yv(1:Nv-1);
+                
+                x1 = sum(xvr)/(Nv-1);
+                y1 = sum(yvr)/(Nv-1);
+                
+                x0 = obsDat.xv(1); 
+                y0 = obsDat.yv(1); 
+                
+                %plot([x0 x1],[y0 y1],'k');
             end
         else
             FillPolys(x,y,sd);

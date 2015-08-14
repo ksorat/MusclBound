@@ -111,6 +111,12 @@ lvlSet.gNx = Nvecx(ghost1d); lvlSet.gNy = Nvecy(ghost1d);
 
 lvlSet.dip = 1.75*lvlSet.ds;
 lvlSet.sd = sd;
+lvlSet.fluid = fluid;
+lvlSet.ghost = ghost;
+lvlSet.obj = obj;
+
+lvlSet = calcGeom(Grid,lvlSet);
+
 Grid.lvlSet = lvlSet;
 
 if (DEBUG & ( (Grid.t+Grid.dt) <eps) & (numObs == 1) ) %Only do once
@@ -119,7 +125,7 @@ if (DEBUG & ( (Grid.t+Grid.dt) <eps) & (numObs == 1) ) %Only do once
     plot(xx(ghost1d),yy(ghost1d),'bx');
     axis equal
     hold off;
-    drawnow; %pause
+    drawnow; pause
 end
 
 function aLvl = lvlPoly(obsDat,Grid)

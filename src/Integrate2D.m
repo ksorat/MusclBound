@@ -1,4 +1,4 @@
-function Gas = Integrate2D(Model,Grid,Gas)
+function [Gas Model] = Integrate2D(Model,Grid,Gas)
 
 
 %Integrate from Grid.t->Grid.t+Grid.dt
@@ -63,6 +63,12 @@ Gas.D = D;
 Gas.Vx = Vx; Gas.Vy = Vy;
 Gas.P = P;
 
+%If necessary, calculate forces exerted by fluid on object
+if (Model.lvlSet.present)
+    %Note, should maybe use the corrected fluxes when appropriate
+    [outForce Model] = calcOutforce(Grid,Model,Fx,Fy);
+end
+
 
 %Uses flux to advance W_i -> W_o over a time dt
 function [Do Vxo Vyo Po] = FluxAdvance(Grid,dt,Di,Vxi,Vyi,Pi,Fx,Fy,Fxl,Fyl,Model,varargin)
@@ -102,6 +108,20 @@ if (Model.solid.present)
         Fyl(:,sol.Fy_sol) = 0.0;
     end
 end
+
+
+if (Model.lvlSet.present)
+    %Zero out interfaces connecting to "obj" cells (NOT Ghosts)
+    Fx_obj = Grid.lvlSet.Fx_obj;
+    Fy_obj = Grid.lvlSet.Fy_obj;
+    Fx(:,Fx_obj) = 0.0;
+    Fy(:,Fy_obj) = 0.0;
+    if (FluxCorrect)
+        Fxl(:,Fx_obj) = 0.0;
+        Fyl(:,Fy_obj) = 0.0;
+    end
+end
+
 %Advance in time, U_i -> U_o
 dtox = dt/Grid.dx;
 dtoy = dt/Grid.dy;
@@ -159,8 +179,6 @@ if isfield(Model,'force')
             %Simple gravity, f = (0,-g)
             fxc = zeros(Nx,Ny);
             fyc = -1*Model.force.g*ones(Nx,Ny);
-            %fw = fxc; fe = fxc;
-            %fs = fyc; fn = fyc;
             
             %Apply force
             %[Mxo Myo Eo] = ApplyForce(dt,Grid,Mxo,Myo,Eo,Dsrc,Fx,Fy,fxc,fyc,fn,fe,fs,fw);
@@ -185,21 +203,6 @@ end
 [Do Vxo Vyo Po] = Con2Prim(Do,Mxo,Myo,Eo,Model);
 
 
-if (Model.solid.present)
-    %Silly resetting of velocities
-    
-    %[Vxo Vyo] = CorrectVel(Grid,Vxo,Vyo);
-    %K: Should think about whether or not this correction is really
-    %necessary
-    
-    %bdry = Grid.solid.BdryFlu;
-    %In = Grid.solid.In;
-    %Vxo(bdry) = 0.0;
-    %Vyo(bdry) = 0.0;
-    %Vxo(In) = 0.0;
-    %Vyo(In) = 0.0;
-    
-end
 
 %Simpler force application.  Take input states and D-src and only centered
 %forces
