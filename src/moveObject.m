@@ -13,9 +13,8 @@ dt = Grid.dt;
 
 for n=1:numObs
     obsDat = lvlDef.obsDat{n};
-    M = 1; %Total mass of polygon
-    I = 0.1; %Moment of inertia
-    
+
+    M = obsDat.M;
     if isfield(obsDat,'Fx') %Negative sign from fluid->solid
         %size(obsDat.vx),size(obsDat.Fx)
         Nv = length(obsDat.xv);
@@ -27,6 +26,7 @@ for n=1:numObs
         xcm = sum(xvr)/(Nv-1);
         ycm = sum(yvr)/(Nv-1);
         
+        I = calcMomInertia(xvr,yvr,M); 
         Fx_cm = sum(Fxr); Fy_cm = sum(Fyr);
         
         Tz = 0;
@@ -65,7 +65,7 @@ for n=1:numObs
         
         obsDat.xv(1:Nv-1) = xvr; obsDat.xv(end) = obsDat.xv(1);
         obsDat.yv(1:Nv-1) = yvr; obsDat.yv(end) = obsDat.yv(1);
-            
+        
     else
         obsDat.xv = obsDat.xv + dt*obsDat.vx;
         obsDat.yv = obsDat.yv + dt*obsDat.vy;
@@ -74,4 +74,25 @@ for n=1:numObs
     
     lvlDef.obsDat{n} = obsDat;
 end
+
+Chk = sum(xvr+yvr);
+
 Model.Init.lvlDef = lvlDef;
+
+function I = calcMomInertia(xvr,yvr,M)
+
+x0 = min(xvr); x1 = max(xvr);
+y0 = min(yvr); y1 = max(yvr);
+xg = linspace(x0,x1); yg = linspace(y0,y1);
+[yy xx] = meshgrid(yg,xg);
+
+In = inpolygon(xx,yy,xvr,yvr);
+Nv = length(xvr);
+xcm = sum(xvr)/Nv;
+ycm = sum(yvr)/Nv;
+
+dm = M/sum(In(:));
+rad = sqrt( (xx-xcm).^2 + (yy-ycm).^2 );
+
+dI = dm*rad.*rad.* (1*In);
+I = sum(dI(:));

@@ -90,7 +90,6 @@ end
 Flc(2,:,:) = Flc(2,:,:) + SclM.*cp; %Correct Mx w/ contact pressure
 Flc(4,:,:) = Flc(4,:,:) + SclM.*cp.*am; %Correct energy
 
-
 function Flux = RiemannFlux_HLLE(Wl,Wr,Model)
 
 Flux = zeros(size(Wl));

@@ -49,6 +49,8 @@ Vy = zeros(Nx,Ny);
 Nvecx = zeros(Nx,Ny);
 Nvecy = zeros(Nx,Ny);
 
+Propel = false(Nx,Ny);
+
 %Create embiggen'ed arrays
 [yy xx] = meshgrid(Grid.yc,Grid.xc);
 [jj ii] = meshgrid(1:Ny,1:Nx);
@@ -92,7 +94,11 @@ for n=1:numObs
     
     Vx(Ind) = aLvl.vx(Ind);
     Vy(Ind) = aLvl.vy(Ind);
-    
+    if (obsDat.propel)
+        PropN = findPropel(Grid,obsDat,sd);
+        Propel = Propel | PropN;
+    end
+        
 end
 
 %Calculate things derived from sd/V/N
@@ -108,6 +114,7 @@ lvlSet.ng = length(ghost1d);
 lvlSet.ghost_sd = sd(ghost1d);
 lvlSet.gVx = Vx(ghost1d); lvlSet.gVy = Vy(ghost1d);
 lvlSet.gNx = Nvecx(ghost1d); lvlSet.gNy = Nvecy(ghost1d);
+lvlSet.propel = Propel(ghost1d);
 
 lvlSet.dip = 1.75*lvlSet.ds;
 lvlSet.sd = sd;
@@ -125,8 +132,35 @@ if (DEBUG & ( (Grid.t+Grid.dt) <eps) & (numObs == 1) ) %Only do once
     plot(xx(ghost1d),yy(ghost1d),'bx');
     axis equal
     hold off;
-    drawnow; pause
+    drawnow; %pause
 end
+
+function PropN = findPropel(Grid,obsDat,sd)
+
+Nx = Grid.Nx; Ny = Grid.Ny;
+xc = Grid.xc; yc = Grid.yc;
+[yy xx] = meshgrid(yc, xc);
+[jj ii] = meshgrid(1:Ny,1:Nx);
+ds = max(Grid.dx,Grid.dy);
+
+In = (sd <= 0);
+
+Outlets = find(obsDat.doProp);
+NumOut = length(Outlets);
+Close = false(Nx,Ny);
+
+rp = 2*sqrt(2)*ds;
+
+for n=1:NumOut
+    outN = Outlets(n);
+    xc = obsDat.xv(outN);
+    yc = obsDat.yv(outN);
+    
+    rr = sqrt( (xx-xc).^2 + (yy-yc).^2 );
+    Close = Close | (rr <= rp);
+end
+PropN = Close & In;
+
 
 function aLvl = lvlPoly(obsDat,Grid)
 
@@ -174,6 +208,7 @@ x1d = xx(Inbd1d); y1d = yy(Inbd1d);
 
 sdM = 2*max(sd1d);
 sd(InBd) = sd1d;
+
 sd(~InBd) = sdM;
 
 nx(InBd) = Nx1d;

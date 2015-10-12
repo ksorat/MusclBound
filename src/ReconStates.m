@@ -36,6 +36,9 @@ switch lower(method)
         disp('Unknown reconstruction method');
 end
 
+%Stupid check for problems
+Bad = isnan( Gas.Vx + Gas.Vy );
+Gas.Vx(Bad) = 0; Gas.Vy(Bad) = 0;
 nW = Checkstate(nW);
 eW = Checkstate(eW);
 sW = Checkstate(sW);
@@ -226,5 +229,14 @@ global SMALL_NUM;
 
 W(1,:,:) = max( W(1,:,:), SMALL_NUM );
 W(4,:,:) = max( W(4,:,:), SMALL_NUM );
+
+%K: This is terribly hackish, but for now necessary for propel tests
+Bad = isnan( squeeze(sum(W,1)) ); 
+W(1,Bad) = SMALL_NUM;
+W(4,Bad) = SMALL_NUM;
+W(2,Bad) = 0.0;
+W(3,Bad) = 0.0;
+
+
 
 

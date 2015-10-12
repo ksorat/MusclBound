@@ -140,6 +140,7 @@ xi(end) = xc(end)+dx/2;
 
 function Model = FixMod(Model)
 
+
 if ~isfield(Model,'ng')
     Model.ng = 3;
 end
@@ -181,6 +182,7 @@ if isfield(Model.Init,'lvlDef')
     lvlDef = Model.Init.lvlDef;
     anymobile = false;
     allpoly = true;
+    anypropel = false;
     
     for n=1:lvlDef.numObs
         obsDat = lvlDef.obsDat{n};
@@ -189,6 +191,13 @@ if isfield(Model.Init,'lvlDef')
         end
         if (obsDat.mobile)
             anymobile = true;
+        end
+        
+        if ~isfield(obsDat,'propel')
+            obsDat.propel = false;
+        end
+        if (obsDat.propel)
+            anypropel = true;
         end
         switch lower(obsDat.type)
             case{'circle'}
@@ -201,6 +210,7 @@ if isfield(Model.Init,'lvlDef')
     end
     Model.lvlSet.anymobile = anymobile;
     Model.lvlSet.allpoly = allpoly;
+    Model.lvlSet.anypropel = anypropel;
     Model.Init.lvlDef = lvlDef;
 else
     Model.lvlSet.anymobile = false;
@@ -230,7 +240,7 @@ global Pmin;
 global Dmin;
 global Nfig;
 
-SMALL_NUM = 1.0e-4;
+SMALL_NUM = 1.0e-3;
 DEBUG = true;
 Pmin = 1.0e-4;
 Dmin = 1.0e-4;

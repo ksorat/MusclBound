@@ -72,7 +72,7 @@ if (Model.solid.present)
 end
 
 Zp = Z(is:ie,js:je);
-kcolor(x,y,Zp'); %axis equal;
+kcolor(x,y,Zp'); axis equal;
 %set(gcf,'units','normalized','outerposition',[0 0 0.5 0.75]);
 Xdom = Grid.xi(end)-Grid.xi(1);
 Ydom = Grid.yi(end)-Grid.yi(1);

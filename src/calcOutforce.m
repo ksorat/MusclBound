@@ -109,7 +109,7 @@ for n=1:Ntot
    fxv(I) = fxv(I) + Fx(n);
    fyv(I) = fyv(I) + Fy(n);
    %For giggles, draw vector from you to your vertex
-%    hold on; plot([x xv(I)],[y yv(I)],'g'); hold off
+    %hold on; plot([x xv(I)],[y yv(I)],'g'); hold off
 end
 
 %Correct for closed loop
@@ -133,4 +133,3 @@ Fxtot = sum(fxv); Fytot = sum(fyv);
 Model.Init.lvlDef = lvlDef;
 outForce.Fxtot = Fxtot;
 outForce.Fytot = Fytot;
-

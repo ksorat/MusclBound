@@ -17,10 +17,12 @@ Pic.cax = [0 3];
 Init.rho0 = 1.0;
 Init.P0 = 1;
 Init.DelP = 1;
-Model.Tfin = 10;
+Model.Tfin = 3;
 Model.Bds = [-1 5 -2.5 2.5];
-Model.Nvec = round( [1024 512]/4);
+Model.Nvec = round( [1024 512]/8);
+%Init.problem = 'blast'; Init.DelP = 1000; Init.cent = [2 -1]; Init.rad = 0.25;
 Init.problem = 'flow';
+
 Nc = 100;
 InP.R = [0.5 1]; InP.Theta = [-30 30]; 
 [xv yv] = makeCrescent(InP,Nc);

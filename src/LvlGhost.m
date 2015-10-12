@@ -65,6 +65,18 @@ for n=1:lvlSet.ng
     
     Gas.Vx(ig,jg) = Vxgc;
     Gas.Vy(ig,jg) = Vygc;
+    if (lvlSet.propel(n))
+        %K: For now, just fix some numbers, note this is dumb
+        Gas.D(ig,jg) = 2*Model.Init.rho0;
+        Gas.P(ig,jg) = Model.Init.P0;
+        Vmag = 5.0;
+        Gas.Vx(ig,jg) = Vmag*nx;
+        Gas.Vy(ig,jg) = Vmag*ny;   
+    end
+%     Chk = Dip + Pip + Gas.Vx(ig,jg) + Gas.Vy(ig,jg);
+%     if isnan(Chk)
+%         keyboard
+%     end
     
 end
 

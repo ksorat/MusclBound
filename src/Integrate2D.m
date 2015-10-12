@@ -1,6 +1,5 @@
 function [Gas Model] = Integrate2D(Model,Grid,Gas)
 
-
 %Integrate from Grid.t->Grid.t+Grid.dt
 
 dt = Grid.dt;
@@ -63,8 +62,10 @@ Gas.D = D;
 Gas.Vx = Vx; Gas.Vy = Vy;
 Gas.P = P;
 
+
 %If necessary, calculate forces exerted by fluid on object
 if (Model.lvlSet.present)
+
     %Note, should maybe use the corrected fluxes when appropriate
     [outForce Model] = calcOutforce(Grid,Model,Fx,Fy);
 end
@@ -166,6 +167,7 @@ if ( FluxCorrect )
     end
     
 end
+
 %Add forces if necessary
 if isfield(Model,'force')
     %There is a force, incorporate it
@@ -190,15 +192,15 @@ if isfield(Model,'force')
 end
 
 %Add ib force if necessary
-if (Model.ib.present)
-    %Think about which velocity to send?
-    
-    %[fxc fyc fn fe fs fw] = ibForces(Grid,Model,Dsrc,Vxi,Vyi,dt);
-    [fxc fyc] = ibForces(Grid,Model,Dsrc,Vxi,Vyi,dt);
-    %[Mxo Myo Eo] = ApplyForce(dt,Grid,Mxo,Myo,Eo,Dsrc,Fx,Fy,fxc,fyc,fn,fe,fs,fw);
-    [Mxo Myo Eo] = ApplyForce(dt,Grid,Model,Do,Mxo,Myo,Eo,Dsrc,fxc,fyc);
-
-end
+% if (Model.ib.present)
+%     %Think about which velocity to send?
+%     
+%     %[fxc fyc fn fe fs fw] = ibForces(Grid,Model,Dsrc,Vxi,Vyi,dt);
+%     [fxc fyc] = ibForces(Grid,Model,Dsrc,Vxi,Vyi,dt);
+%     %[Mxo Myo Eo] = ApplyForce(dt,Grid,Mxo,Myo,Eo,Dsrc,Fx,Fy,fxc,fyc,fn,fe,fs,fw);
+%     [Mxo Myo Eo] = ApplyForce(dt,Grid,Model,Do,Mxo,Myo,Eo,Dsrc,fxc,fyc);
+% 
+% end
 %Convert back to primitive and return, U_o -> W_o
 [Do Vxo Vyo Po] = Con2Prim(Do,Mxo,Myo,Eo,Model);
 
