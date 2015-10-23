@@ -33,7 +33,7 @@ global TINY DEBUG ARMOR Nfig;
 TINY = 1.0e-5;
 DEBUG = true;
 ARMOR = true;
-Nfig = 0;
+Nfig = -1;
 
 %Integration parameters
 Model = setField(Model,'ng',3);

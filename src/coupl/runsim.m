@@ -32,6 +32,11 @@ Grid.dt = CalcDT(Model,Grid,Gas);
 
 Tfin = Model.Tfin;
 
+%Show initial picture
+if (Model.Pic.view)
+    makeFig(Model,Grid,Gas);
+end
+        
 %Enter timeloop
 while (Grid.t<Tfin)
     

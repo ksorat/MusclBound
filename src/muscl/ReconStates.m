@@ -189,12 +189,6 @@ global TINY;
 W(1,:,:) = max( W(1,:,:), TINY );
 W(4,:,:) = max( W(4,:,:), TINY );
 
-%K: This is terribly hackish, but for now necessary for propel tests
-% Bad = isnan( squeeze(sum(W,1)) ); 
-% W(1,Bad) = TINY;
-% W(4,Bad) = TINY;
-% W(2,Bad) = 0.0;
-% W(3,Bad) = 0.0;
 
 %----------
 %Calculates minus/plus states (in dirvec direction) for all variables using

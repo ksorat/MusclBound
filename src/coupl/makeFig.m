@@ -1,6 +1,11 @@
 function makeFig(Model,Grid,Gas)
 
 global Nfig;
+Xdom = Grid.xi(end)-Grid.xi(1);
+Ydom = Grid.yi(end)-Grid.yi(1);
+aspRat = Xdom/Ydom;
+FixIn = 15;
+
 
 Gam = Model.Init.Gam;
 %Set bounds
@@ -69,11 +74,8 @@ end
 Zp = Z(is:ie,js:je);
 kcolor(x,y,Zp'); 
 
-Xdom = Grid.xi(end)-Grid.xi(1);
-Ydom = Grid.yi(end)-Grid.yi(1);
-aspRat = Xdom/Ydom;
-FixIn = 18;
-set(gcf,'units','inches','outerposition', [ 0 0 FixIn FixIn/aspRat]); 
+
+%set(gcf,'units','inches','outerposition', [ 0 0 FixIn FixIn/aspRat]); 
 
 %Set color axis to user-defined, or fixed number of standard dev's
 if isfield(Model.Pic,'cax')
@@ -126,9 +128,11 @@ caxis(cAx);
 xlabel('X'); ylabel('Y');
 titS = sprintf('%s @ t=%3.3f', varS, Grid.t);
 title(titS);
+axis([min(x) max(x) min(y) max(y)]);
 axis equal;
+set(gcf,'units','inches','outerposition', [ 0 0 FixIn FixIn/aspRat]); 
 drawnow;
-if (Model.Pic.dovid)
+if (Model.Pic.dovid && (Nfig>=0))
     Figfile = sprintf('%s/Vid.%04d.png', Model.Pic.vid_dir,Nfig);
     export_fig(Figfile);
 end
