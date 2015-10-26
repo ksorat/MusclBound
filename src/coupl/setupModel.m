@@ -51,6 +51,9 @@ Model.Init = setField(Model.Init,'rho0',1);
 Model.Init = setField(Model.Init,'P0',1);
 Model.Init = setField(Model.Init,'DelP',1);
 
+%Extra fluid physics
+Model = setField(Model,'doVisc',false);
+
 %Boundary conditions
 if ~isfield(Model,'bcs')
     Model.bcs = [];

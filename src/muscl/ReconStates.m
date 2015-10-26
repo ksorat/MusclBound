@@ -3,7 +3,7 @@
 %Calculates directed states within a cell, ie
 %Density @ North/South/East/West interface
 %according to a given method/monotonization routine
-function [nW eW sW wW] = ReconStates(Grid,Gas,method)
+function [nW eW sW wW DxW DyW] = ReconStates(Grid,Gas,method)
 
 global ARMOR;
 
@@ -12,6 +12,8 @@ global ARMOR;
 [Nx,Ny] = size(Gas.D);
 nW = zeros(4,Nx,Ny);
 
+DxW = [];
+DyW = [];
 
 switch lower(method)
     case {'pcm'}
@@ -25,8 +27,8 @@ switch lower(method)
     case {'plm'}
         %Create other holders
         eW = nW; sW = nW; wW = nW;
-        [wW eW] = DirstatePLM(Grid,Gas,'x');
-        [sW nW] = DirstatePLM(Grid,Gas,'y');
+        [wW eW DxW] = DirstatePLM(Grid,Gas,'x');
+        [sW nW DyW] = DirstatePLM(Grid,Gas,'y');
     case {'ppm'}
         %Create other holders
         eW = nW; sW = nW; wW = nW;
@@ -42,10 +44,7 @@ end
 %Currently only seems necessary for propelled objects
 
 if (ARMOR)
-    %This is sometimes necessary for propelled objects
-    %Should diagnose these problems further
-    %Bad = isnan( Gas.Vx + Gas.Vy );
-    %Gas.Vx(Bad) = 0; Gas.Vy(Bad) = 0;
+    %If protecting states
     nW = Checkstate(nW);
     eW = Checkstate(eW);
     sW = Checkstate(sW);
@@ -137,10 +136,43 @@ for n=1:Gas.Nv
 end
 
 
+function [mW pW DelWmon] = DirstatePLM(Grid,Gas,dir)
+%Setup bounds
+[Nx,Ny] = size(Gas.D);
+allgas = zeros(Gas.Nv,Nx,Ny);
+allgas(1,:,:) = Gas.D;
+allgas(2,:,:) = Gas.Vx;
+allgas(3,:,:) = Gas.Vy;
+allgas(4,:,:) = Gas.P;
+mW = allgas; pW = allgas;
+
+IntX = 2:Nx-1;
+IntY = 2:Ny-1;
+switch lower(dir)
+    case{'x'}
+        Xp = 3:Nx;
+        Yp = IntY;
+        Xm = 1:Nx-2;
+        Ym = IntY;
+    case{'y'}
+        Xp = IntX;
+        Yp = 3:Ny;
+        Xm = IntX;
+        Ym = 1:Ny-2;
+end
+
+[DelWl DelWr DelWc] = GetDels(allgas,IntX,IntY,Xm,Xp,Ym,Yp);
+DelWmon = Monotonize(DelWl,DelWr,DelWc);
+
+mW(:,IntX,IntY) = allgas(:,IntX,IntY) - 0.5*DelWmon(:,IntX,IntY);
+pW(:,IntX,IntY) = allgas(:,IntX,IntY) + 0.5*DelWmon(:,IntX,IntY);
+
+
+
 %----------
 %Calculates minus/plus states (in dirvec direction) for all variables using
 %the PLM method
-function [mW pW DelWmon] = DirstatePLM(Grid,Gas,dir)
+function [mW pW] = DirstatePLM_Old(Grid,Gas,dir)
 
 [Nx,Ny] = size(Gas.D);
 allgas = zeros(Gas.Nv,Nx,Ny);

@@ -1,7 +1,7 @@
 %Takes in x/y interface fluxes
 %Returns outForce which contains
 
-function [outForce Model] = calcF2Sforce(Grid,Model,Fl_x,Fl_y)
+function [outForce Model] = CalcF2Sforce(Grid,Model,Fl_x,Fl_y)
 
 Nx = Grid.Nx; Ny = Grid.Ny;
 dx = Grid.dx; dy = Grid.dy;

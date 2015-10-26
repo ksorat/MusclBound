@@ -45,6 +45,11 @@ while (Grid.t<Tfin)
     %Evolve gas
     [Gas Model] = Integrate2D(Model,Grid,Gas);
     
+    %Apply viscous effects if necessary
+    if (Model.doVisc)
+        Gas = ApplyViscosity(Model,Grid,Gas);
+    end
+    
     %Evolve solid if necessary
     %-----
     if (Model.Obj.anymobile)

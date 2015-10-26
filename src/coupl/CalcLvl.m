@@ -25,7 +25,7 @@ global DEBUG;
 Obj = Model.Obj;
 
 Nx = Grid.Nx; Ny = Grid.Ny;
-numObj =Obj.numObj;
+numObj = Obj.numObj;
 
 lvlSet.ds = max(Grid.dx,Grid.dy);
 lvlSet.ds_min = min(Grid.dx,Grid.dy);

@@ -66,7 +66,7 @@ Gas.P = P;
 %If necessary, calculate forces exerted by fluid on object
 if (Model.Obj.present)
     %Note, should maybe use the corrected fluxes when appropriate
-    [outForce Model] = calcF2Sforce(Grid,Model,Fx,Fy);
+    [outForce Model] = CalcF2Sforce(Grid,Model,Fx,Fy);
 end
 
 
