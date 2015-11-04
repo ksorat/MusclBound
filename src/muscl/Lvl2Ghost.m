@@ -29,39 +29,64 @@ for n=1:lvlSet.ng
     xip = xg + L*nx;
     yip = yg + L*ny;
     
-    %Now we have image point, find 4 closest cells to image point
-    Img = conImage(xip,yip,Grid);
-    
-    %Now we have info about the 4 closest cells, prep the bilinear
-    %interpolation
-    
-    %Find the density and pressure at the image point
-    %Assuming neuman BC w/ normal deriv=0 at boundary
-    Dip = calcInterp(Img,Gas.D,Grid);
-    Pip = calcInterp(Img,Gas.P,Grid);
-    
-    
-    %Now calculate velocity to zero out slip at boundary
-    Vxip = calcInterp(Img,Gas.Vx,Grid);
-    Vyip = calcInterp(Img,Gas.Vy,Grid);
+    %Calculate interpolated gas quantities at probe
+    [Dip Vxip Vyip Pip] = ProbeAt(xip,yip,Grid,Gas);
+
     scl = L/(L - abs(sdn) );
     
-    Vxbi = lvlSet.gVx(n);
-    Vybi = lvlSet.gVy(n);
+    %Velocity values of the wall
+    VxW = lvlSet.gVx(n);
+    VyW = lvlSet.gVy(n);
     
-    Vxgc = Vxip - scl*( Vxip - Vxbi );
-    Vygc = Vyip - scl*( Vyip - Vybi );
-
+    %Set ghost values
+    %----------------
+    %Set ghost value of density, assuming neuman bc w/ normal deriv=0 at
+    %boundary
+    Dgc = Dip;
+    
+    %Set ghost value of pressure
+    %If neuman bc, w/ normal deriv=0
+    Pgc = Pip;
+    %Otherwise, use wall temperature boundary condition
+    %Tw = Temperature of wall
+    %Tfw = Temperature of fluid at wall, equal to Tw if Knud=0
+    
+    %Tgc = Tip - scl*( Tip - Tfw)
+    %Pgc = Temp2Pressure(Dgc,Tgc)
+    
+    
+    %Now set velocity values
+    %If Knud=0, Vf = Vw (fluid velocity @ wall = wall velocity)
+    if (~Model.doKnud)
+        Vxfw = VxW;
+        Vyfw = VyW;
+    else
+        %Knudsen number is non-zero
+        %Need an extra image point (iip) & Vx/Vy @ iip
+        xiip = xip + lvlSet.dip*nx;
+        yiip = yip + lvlSet.dip*ny;
+        [Diip Vxiip Vyiip Piip] = ProbeAt(xiip,yiip,Grid,Gas);
         
-    if (Img.g2g)
-        Dip = Gas.D(ig,jg);
-        Pip = Gas.P(ig,jg);
+        %Map Vip/Viip/VW -> new coordinate system (Vn,Vt), normal/tangential to
+        %wall
+        
+        %Vnfw = VnW, normal velocities of wall/fluid at wall agree
+        
+        %Vtfw = VtW + Model.Knud.alpha_u*Model.Knud.lam_mfp*dutdn
+    end
+    Vxgc = Vxip - scl*( Vxip - Vxfw );
+    Vygc = Vyip - scl*( Vyip - Vyfw );
+    
+        
+    if (Img.g2g) %Ghost 2 ghost, ie this ghost's outward normal hits another ghost
+        Dgc = Gas.D(ig,jg);
+        Pgc = Gas.P(ig,jg);
         Vxgc = Gas.Vx(ig,jg);
         Vygc = Gas.Vy(ig,jg);
     end
 
-    Gas.D(ig,jg) = Dip;
-    Gas.P(ig,jg) = Pip;
+    Gas.D(ig,jg) = Dgc;
+    Gas.P(ig,jg) = Pgc;
     
     Gas.Vx(ig,jg) = Vxgc;
     Gas.Vy(ig,jg) = Vygc;
@@ -79,6 +104,31 @@ for n=1:lvlSet.ng
 
 end
 
+%Take vector in x/y system -> n/t system
+function [Vn Vt] = xy2nt(Vx,Vy,nx,ny)
+
+Vn = 0.0;
+Vt = 0.0;
+
+function [Vx Vy] = nt2xy(Vn,Vt,nx,ny)
+
+Vx = 0.0;
+Vy = 0.0;
+
+%Find interpolated values of primitive variables at probe points xp/yp
+function [Dp Vxp Vyp Pp] = ProbeAt(xp,yp,Grid,Gas)
+    
+%Find 4 closest cells to probe point
+Img = conImage(xp,yp,Grid);
+
+%Now that we have info about the 4 closest cells, do the bilinear
+%interpolation to get primitive variables at probe
+
+Dp = calcInterp(Img,Gas.D,Grid);
+Pp = calcInterp(Img,Gas.P,Grid);
+Vxp = calcInterp(Img,Gas.Vx,Grid);
+Vyp = calcInterp(Img,Gas.Vy,Grid);    
+    
 %Calculates value of Z @ image point given 4 data points
 function Zip = calcInterp(Img,Z,Grid)
 

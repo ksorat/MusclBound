@@ -51,13 +51,23 @@ Model.Init = setField(Model.Init,'rho0',1);
 Model.Init = setField(Model.Init,'P0',1);
 Model.Init = setField(Model.Init,'DelP',1);
 
-%Extra fluid physics
+%Extra fluid physics (Model.Visc)
 Model = setField(Model,'doVisc',false);
+Model = setField(Model,'Visc',[]);
+
+%Non-zero Knudsen number (Model.doKnud)
+Model = setField(Model,'doKnud',false);
+Model = setField(Model.'Knud',[]);
+Model.Knud = setField(Model.Knud,'alpha_u', 1.142); %Slip coefficients
+Model.Knud = setField(Model.Knud,'alpha_T', 0.5865); %Slip coefficients
+Model.Knud = setField(Model.Knud,'Pr', 1.0); %Prandtl number
+Model.Knud = setField(Model.Knud,'lam_mfp',1.0); %Mean free path
 
 %Boundary conditions
 if ~isfield(Model,'bcs')
     Model.bcs = [];
 end
+
 Model.bcs = setField(Model.bcs,'ibx','periodic');
 Model.bcs = setField(Model.bcs,'obx','periodic');
 Model.bcs = setField(Model.bcs,'iby','periodic');
