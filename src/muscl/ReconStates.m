@@ -27,8 +27,11 @@ switch lower(method)
     case {'plm'}
         %Create other holders
         eW = nW; sW = nW; wW = nW;
-        [wW eW DxW] = DirstatePLM(Grid,Gas,'x');
-        [sW nW DyW] = DirstatePLM(Grid,Gas,'y');
+        [wW eW DelWx] = DirstatePLM(Grid,Gas,'x');
+        [sW nW DelWy] = DirstatePLM(Grid,Gas,'y');
+        %Convert delta to derivative
+        DxW = DelWx/Grid.dx;
+        DyW = DelWy/Grid.dy;
     case {'ppm'}
         %Create other holders
         eW = nW; sW = nW; wW = nW;
@@ -154,11 +157,13 @@ switch lower(dir)
         Yp = IntY;
         Xm = 1:Nx-2;
         Ym = IntY;
+        
     case{'y'}
         Xp = IntX;
         Yp = 3:Ny;
         Xm = IntX;
         Ym = 1:Ny-2;
+        
 end
 
 [DelWl DelWr DelWc] = GetDels(allgas,IntX,IntY,Xm,Xp,Ym,Yp);

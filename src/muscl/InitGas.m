@@ -13,6 +13,8 @@ switch lower(Model.Init.problem)
         Gas = InitImplosion(Model,Grid);
     case{'flow'}
         Gas = InitFlow(Model,Grid);
+    case{'vortexsheet'}
+        Gas = InitVortexSheet(Model,Grid);
     otherwise
         disp('Unknown problem type');
         pause
@@ -122,6 +124,20 @@ Gas.D(:,:) = Model.Init.rho0;
 Gas.Vx(:,:) = 0.0;
 Gas.Vy(:,:) = 0.0;
 Gas.P(:,:) = Model.Init.P0;
+
+function Gas = InitVortexSheet(Model,Grid)
+
+Gas = BuildGas(Model,Grid);
+Gas.D(:,:) = Model.Init.rho0;
+Gas.P(:,:) = Model.Init.P0;
+Gas.Vy(:,:) = 0.0;
+
+Nu = Model.Init.Nu;
+T0 = Model.Init.T0;
+y = Grid.yc;
+Uy = erf( 0.5*y/sqrt( Nu*T0 ) );
+
+Gas.Vx(:,:) = repmat( Uy, [Grid.Nx,1] );
 
 function Gas = BuildGas(Model,Grid)
 

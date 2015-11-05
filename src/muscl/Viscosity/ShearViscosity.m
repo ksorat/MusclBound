@@ -4,4 +4,4 @@
 function Eta = ShearViscosity(D,P,x,y,Model)
 
 %Put functional forms here
-Eta = 1;
+Eta = Model.Init.Nu;

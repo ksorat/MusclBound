@@ -57,7 +57,7 @@ Model = setField(Model,'Visc',[]);
 
 %Non-zero Knudsen number (Model.doKnud)
 Model = setField(Model,'doKnud',false);
-Model = setField(Model.'Knud',[]);
+Model = setField(Model,'Knud',[]);
 Model.Knud = setField(Model.Knud,'alpha_u', 1.142); %Slip coefficients
 Model.Knud = setField(Model.Knud,'alpha_T', 0.5865); %Slip coefficients
 Model.Knud = setField(Model.Knud,'Pr', 1.0); %Prandtl number

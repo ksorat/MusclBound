@@ -126,6 +126,8 @@ W_yi(:,:,2:Ny) = 0.5*( nW(:,:,1:Ny-1) + sW(:,:,2:Ny) );
 %values.  Could instead calculate Hessian, but likely not necessary.
 %Maybe something to play with later?
 
+
+
 function [W_xi W_yi] = Centered2Interface(Grid,W)
 Nx = Grid.Nx; Ny = Grid.Ny;
 Nxi = Nx+1; Nyi = Ny+1;
