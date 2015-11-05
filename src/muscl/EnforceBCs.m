@@ -34,6 +34,8 @@ for n=1:Nd
            Gas = PInflowBC(Model,Grid,Gas,dir);
        case{'injet'}
            Gas = InJetBC(Model,Grid,Gas,dir);
+       case{'couette'}
+           Gas = CouetteBC(Model,Grid,Gas,dir);
        otherwise
            disp('Unknown boundary condition');
            pause
@@ -167,6 +169,39 @@ switch (lower(dir.str))
         
     otherwise
         display('Inflow not implemented for this direction');
+        pause
+end
+
+function Gas = CouetteBC(Model,Grid,Gas,dir)
+
+[Nx Ny] = size(Gas.D);
+
+ng = Grid.ng;
+
+is = Grid.is; ie = Grid.ie;
+isd = Grid.isd; ied = Grid.ied;
+
+js = Grid.js; je = Grid.je;
+jsd = Grid.jsd; jed = Grid.jed;
+
+switch (lower(dir.str))
+    case{'iby'}
+        for n=1:ng
+            Gas.D(:,js-n) = Model.Init.rho0;
+            Gas.Vx(:,js-n) = Model.Init.U;
+            Gas.Vy(:,js-n) = 0.0;
+            Gas.P(:,js-n) = Model.Init.P0;
+        end
+    case{'oby'}
+        for n=1:ng
+        	Gas.D(:,je+n) = Model.Init.rho0;
+            Gas.Vx(:,je+n) = -1*Model.Init.U;
+            Gas.Vy(:,je+n) = 0.0;
+            Gas.P(:,je+n) = Model.Init.P0;
+        end
+        
+    otherwise
+        display('Couette not implemented for this direction');
         pause
 end
 
