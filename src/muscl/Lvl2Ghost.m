@@ -66,14 +66,26 @@ for n=1:lvlSet.ng
         xiip = xip + lvlSet.dip*nx;
         yiip = yip + lvlSet.dip*ny;
         [Diip Vxiip Vyiip Piip] = ProbeAt(xiip,yiip,Grid,Gas);
-        
+
         %Map Vip/Viip/VW -> new coordinate system (Vn,Vt), normal/tangential to
         %wall
+        [VnW VtW] = xy2nt(VxW,VyW,nx,ny);
+        [Vnip Vtip] = xy2nt(Vxip,Vyip,nx,ny);
+        [Vniip Vtiip] = xy2nt(Vxiip,Vyiip,nx,ny);
         
+        %Calculate derivative along normal in tangential velocity
+        dUtdn = (Vtiip - Vtip)/lvlSet.dip;
+        
+        %Calculate velocities of fluid at wall
         %Vnfw = VnW, normal velocities of wall/fluid at wall agree
+        Vnfw = VnW;
+        Vtfw = VtW + Model.Knud.alpha_u*Model.Knud.lam_mfp*dUtdn;
         
-        %Vtfw = VtW + Model.Knud.alpha_u*Model.Knud.lam_mfp*dutdn
+        %Now map back to cartesian coordinates
+        [Vxfw Vyfw] = nt2xy(Vnfw,Vtfw,nx,ny);
+        
     end
+    
     Vxgc = Vxip - scl*( Vxip - Vxfw );
     Vygc = Vyip - scl*( Vyip - Vyfw );
     
@@ -105,15 +117,27 @@ for n=1:lvlSet.ng
 end
 
 %Take vector in x/y system -> n/t system
-function [Vn Vt] = xy2nt(Vx,Vy,nx,ny)
+%Wolog, assume direction for T
 
-Vn = 0.0;
-Vt = 0.0;
+function [Vn Vt] = xy2nt(Vx,Vy,Nx,Ny)
+Tx = -Ny;
+Ty = Nx; %Guarantees dot(N,T) = 0
 
-function [Vx Vy] = nt2xy(Vn,Vt,nx,ny)
+Vn = Vx*Nx + Vy*Ny;
+Vt = Vx*Tx + Vy*Ty;
 
-Vx = 0.0;
-Vy = 0.0;
+function [Vx Vy] = nt2xy(Vn,Vt,Nx,Ny)
+%Note, this must be same direction assumption as above or things will be
+%bad
+
+%V = Vx x^ + Vy y^ = Vn N^ + Vt T^
+%  = Vn (Nx x^ + Ny y^) + Vt ( Tx x^ + Ty y^)
+%  = x^ ( Vn*Nx  + Vt*Tx ) + y^ ( Vn*Ny + Vt*Ty)
+Tx = -Ny;
+Ty = Nx;
+
+Vx = Vn*Nx + Vt*Tx;
+Vy = Vn*Ny + Vt*Ty;
 
 %Find interpolated values of primitive variables at probe points xp/yp
 function [Dp Vxp Vyp Pp] = ProbeAt(xp,yp,Grid,Gas)
