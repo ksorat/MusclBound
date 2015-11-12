@@ -18,7 +18,7 @@ if (Model.Obj.anymobile) %Are any objects moving?
     Vabs = Vabs + max(Vxm,Vym);
 end
 
-Vsig = Cs+Vabs; %Signal speeds
+Vsig = Cs+Vabs; %Signal speeds per cell
 dt2d = Grid.C0*dxmin./Vsig; %Fluid CFL
 if (Model.doVisc)
     %Incorporate viscosity information into timestep
