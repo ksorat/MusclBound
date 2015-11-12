@@ -11,6 +11,7 @@ Dvec = zeros(2,Nd);
 Dvec(:,1) = [-1,0]; Dvec(:,2) = [1,0];
 Dvec(:,3) = [0,-1]; Dvec(:,4) = [0,1];
 
+
 %Loop over directions (n/s/e/w)
 for n=1:Nd
    ComS = sprintf('bc = Model.bcs.%s;',Dirs{n});
@@ -34,8 +35,12 @@ for n=1:Nd
            Gas = PInflowBC(Model,Grid,Gas,dir);
        case{'injet'}
            Gas = InJetBC(Model,Grid,Gas,dir);
-       case{'couette'}
-           Gas = CouetteBC(Model,Grid,Gas,dir);
+       case{'noslip'}
+           Gas = NoslipBC(Model,Grid,Gas,dir);
+       case{'dirichlet'}
+           Gas = DirichletBC(Model,Grid,Gas,dir);
+       %case{'couette'}
+           %Gas = CouetteBC(Model,Grid,Gas,dir);
        otherwise
            disp('Unknown boundary condition');
            pause
@@ -50,6 +55,42 @@ if (Model.Obj.present)
     Gas = Lvl2Ghost(Model,Grid,Gas);
 end
 
+%Impose dirichlet BC given by
+%Model.Init.ibx.dbc[1,2,3,4]
+
+function Gas = DirichletBC(Model,Grid,Gas,dir)
+
+ComS = sprintf('dbc = Model.Init.%s.dbc;', dir.str);
+eval(ComS);
+
+[Nx,Ny] = size(Gas.D);
+
+is = Grid.is; ie = Grid.ie;
+isd = Grid.isd; ied = Grid.ied;
+
+js = Grid.js; je = Grid.je;
+jsd = Grid.jsd; jed = Grid.jed;
+ng = Grid.ng;
+
+switch(lower(dir.str))
+    case{'ibx'}
+        Ix = isd:(isd+ng);
+        Iy = 1:Ny;     
+    case{'obx'}
+        Ix = (ied-ng):ied;
+        Iy = 1:Ny;
+    case{'iby'}
+        Ix = 1:Nx;
+        Iy = jsd:(jsd+ng);
+    case{'oby'}
+        Ix = 1:Nx;
+        Iy = (jed-ng):jed;
+end
+
+Gas.D(Ix,Iy)  = dbc(1);
+Gas.Vx(Ix,Iy) = dbc(2);
+Gas.Vy(Ix,Iy) = dbc(3);
+Gas.P(Ix,Iy)  = dbc(4);
 
 function Gas = InJetBC(Model,Grid,Gas,dir)
 
@@ -174,6 +215,8 @@ end
 
 function Gas = CouetteBC(Model,Grid,Gas,dir)
 
+display('Not currently finished/trustworthy');
+pause
 [Nx Ny] = size(Gas.D);
 
 ng = Grid.ng;
@@ -252,10 +295,27 @@ switch (lower(dir.str))
         pause
 end
 
-function Gas = WallBC(Model,Grid,Gas,dir)
-Vars = {'D','Vx','Vy','P'};
+% function Gas = WallBC(Model,Grid,Gas,dir)
+% Vars = {'D','Vx','Vy','P'};
+% 
+% fl = [1,0,0,1]; %Sign, reflect density/pressure zero out velocity
+% 
+% %Loop over hydro variables
+% for v=1:length(Vars)
+%     var = Vars{v};
+%     ComS = sprintf('Gas.%s = ReflectVar(Gas.%s,Grid,dir,fl(v));',var,var);
+%     eval(ComS);
+% end
 
-fl = [1,0,0,1]; %Sign, reflect density/pressure zero out velocity
+%NoslipBC, reflect both normal/tangential components
+%Hijack most of ReflectBC
+function Gas = NoslipBC(Model,Grid,Gas,dir)
+Vars = {'D','Vx','Vy','P'};
+fl = [1,1,1,1]; %Sign, put negative in component to be reflected
+
+%For noslip, both components reflected
+fl(2) = -1;
+fl(3) = -1;
 
 %Loop over hydro variables
 for v=1:length(Vars)

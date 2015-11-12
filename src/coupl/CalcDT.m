@@ -5,6 +5,7 @@ global TINY;
 
 %Find min grid size
 dxmin = min(Grid.dx,Grid.dy);
+dxbar = sqrt(Grid.dx*Grid.dy);
 
 Vabs = sqrt(Gas.Vx.^2 + Gas.Vy.^2);
 
@@ -17,9 +18,19 @@ if (Model.Obj.anymobile) %Are any objects moving?
     Vabs = Vabs + max(Vxm,Vym);
 end
 
-dt2d = dxmin./(Cs + Vabs);
+Vsig = Cs+Vabs; %Signal speeds
+dt2d = Grid.C0*dxmin./Vsig; %Fluid CFL
+if (Model.doVisc)
+    %Incorporate viscosity information into timestep
+    Eta = ShearViscosity(Gas.D,Gas.P,Grid.xc,Grid.yc,Model);
+    
+    %Calculate Reynolds number
+    Re = Gas.D.*Vsig*dxbar./Eta;
+    Sigma = 0.95;
+    dt2d = Sigma*dt2d./( 1 + 2./Re ); %Modified for viscosity
+end
 
-dt = Grid.C0*min(dt2d(:));
+dt = min(dt2d(:));
 
 if (dt < TINY)
     disp('Unreasonably small timestep');
