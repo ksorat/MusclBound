@@ -24,8 +24,8 @@ if (Model.doVisc)
     %Incorporate viscosity information into timestep
     Eta = ShearViscosity(Gas.D,Gas.P,Grid.xc,Grid.yc,Model);
     
-    %Calculate Reynolds number
-    Re = Gas.D.*Vsig*dxbar./Eta;
+    %Calculate (cell) Reynolds number
+    Re = Vsig*dxbar./Eta; %Double check that units are correct (ie, density)
     Sigma = 0.95;
     dt2d = Sigma*dt2d./( 1 + 2./Re ); %Modified for viscosity
 end

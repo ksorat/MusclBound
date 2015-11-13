@@ -89,14 +89,6 @@ for n=1:lvlSet.ng
     Vxgc = Vxip - scl*( Vxip - Vxfw );
     Vygc = Vyip - scl*( Vyip - Vyfw );
     
-        
-    if (Img.g2g) %Ghost 2 ghost, ie this ghost's outward normal hits another ghost
-        Dgc = Gas.D(ig,jg);
-        Pgc = Gas.P(ig,jg);
-        Vxgc = Gas.Vx(ig,jg);
-        Vygc = Gas.Vy(ig,jg);
-    end
-
     Gas.D(ig,jg) = Dgc;
     Gas.P(ig,jg) = Pgc;
     
@@ -147,6 +139,9 @@ Img = conImage(xp,yp,Grid);
 
 %Now that we have info about the 4 closest cells, do the bilinear
 %interpolation to get primitive variables at probe
+if (Img.g2g) %Ghost 2 ghost, ie this ghost's outward normal hits another ghost
+    disp('\tWarning, ghost to ghost contact');
+end
 
 Dp = calcInterp(Img,Gas.D,Grid);
 Pp = calcInterp(Img,Gas.P,Grid);
