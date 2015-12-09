@@ -27,7 +27,10 @@ if (Model.doVisc)
     %Calculate (cell) Reynolds number
     Re = Vsig*dxbar./Eta; %Double check that units are correct (ie, density)
     Sigma = 0.95;
+    %dt_CFL = min(dt2d(:));
     dt2d = Sigma*dt2d./( 1 + 2./Re ); %Modified for viscosity
+    %dt_V = min(dt2d(:));
+    %fprintf('\tdt_CFL = %e / dt_V = %e\n', dt_CFL, dt_V);
 end
 
 dt = min(dt2d(:));
