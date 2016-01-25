@@ -59,7 +59,7 @@ while (Grid.t<Tfin)
     
     %Print diagnostics if necessary
     if (mod(Grid.Ts,Model.tsDiag) == 0)    
-        printDiag(Grid,Gas);
+        printDiag(Model,Grid,Gas);
         if (Model.Pic.view)
             makeFig(Model,Grid,Gas);
         end
@@ -82,8 +82,17 @@ end
 printDiag(Grid,Gas);
 
 
-function printDiag(Grid,Gas)
+function printDiag(Model,Grid,Gas)
 %Print diagnostics at given cadence
 
 fprintf('\tTime = %3.3f : Step = %4d, dt = %3.2e\n',Grid.t,Grid.Ts,Grid.dt);
+if isfield(Model.Obj,'objDef')
+    for i=1:length(Model.Obj.objDef)
+        Fx = Model.Obj.objDef{i}.Fx;
+        Fy = Model.Obj.objDef{i}.Fy;
+        Fxt = sum(Fx(1:end-1));
+        Fyt = sum(Fy(1:end-1));
+        fprintf('\t\tObject %d: Fx = %3.3e / Fy = %3.3e\n', i, Fxt, Fyt);
+    end
+end
 

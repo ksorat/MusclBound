@@ -2,7 +2,7 @@
 %Various tests of level set method w/ static polygons
 clear; close all;
 
-config = 'nacajet';
+config = 'circflow';
 %config = 'wedgejet';
 %Generic initialization
 Model.Tfin = 10;
@@ -17,6 +17,10 @@ inP.x0 = 0; inP.y0 = 0; inP.T = 0.15; inP.c = 2; inP.alpha = 0; obsPoly.type = '
 %Create wedge
 obsWedge.type = 'poly'; xv = [0 1 1]; yv = [0 0.2 -0.2]; [obsWedge.xv obsWedge.yv] = makePoly(xv,yv,0.01);
 obsWedge.xv = xv'; obsWedge.yv = yv';
+
+%Create circle
+InP.R = 0.5; InP.C = [2,0];
+obsCirc.type = 'poly'; [obsCirc.xv obsCirc.yv] = makeCircle(InP,500);
 
 Model.bcs.obx = 'outflow'; Model.bcs.iby = 'outflow'; Model.bcs.oby = 'outflow'; 
 switch lower(config)
@@ -47,7 +51,14 @@ switch lower(config)
         Model.bcs.ibx = 'injet'; 
         
         lvlDef.numObs = 1;
-        lvlDef.obsDat{1} = obsWedge;        
+        lvlDef.obsDat{1} = obsWedge; 
+    case{'circflow'}
+        Init.DelP = 50;
+        Model.Bds = [-1 4 -2 2];
+        Model.bcs.ibx = 'pinflow';
+        lvlDef.numObs = 1;
+        lvlDef.obsDat{1} = obsCirc;
+        Model.Pic.val = 'spd';
     otherwise
         disp('Unknown problem');
 end
